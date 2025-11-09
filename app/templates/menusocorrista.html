@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Menu - PIAUI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/menusocorrista.css') }}">
+</head>
+<body>
+    <div class="modal-topo">
+        <div class="left-group">
+         <a href="{{ url_for('telainicial.telainicial') }}">
+            <button class="btn-voltar">
+                <img src="{{ url_for('static', filename='imagens/voltarbranco.png') }}" alt="voltar">
+            </button>
+        </a>
+        <h1>PIAUI</h1>
+        </div>
+    </div>
+    <div class="menu-principal">
+        <a href="{{ url_for('emergencia_bp.cadastrar_emergencia') }}">
+            <button class="botao-menu">
+                <span>Cadastro de emêrgencia</span>
+                <img src="{{ url_for('static', filename='imagens/cruzvermelha.png') }}" alt="Cadastros" class="icon-botao">
+            </button>
+        </a>
+        <a href="{{ url_for('lista_hospitais_bp.lista_hospitais') }}">
+            <button class="botao-menu">
+                <span>Lista de Hospitais</span>
+                <img src="{{ url_for('static', filename='imagens/listahospital.png') }}" alt="Lista" class="icon-botao">
+            </button>
+        </a>
+    </div>
+</body>
+</html>

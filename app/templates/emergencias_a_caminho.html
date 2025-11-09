@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <title>Emergências a Caminho</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/emergenciasacaminho.css') }}">
+</head>
+<body>
+    <header class="top-bar">
+        <a href="{{ url_for('hospital_bp.menu_hospital') }}">
+            <button class="btn-voltar" aria-label="Voltar">
+                <img src="{{ url_for('static', filename='imagens/voltarvermelho.png') }}" alt="Voltar" />
+            </button>
+        </a>
+        <h1 class="titulo">Emergência em andamento</h1>
+    </header>
+
+    {% if emergencia %}
+    <div class="main-content">
+        <div id="mapa"></div>
+        <div class="painel-direito">
+            <a class="btn-abrir-formulario" href="{{ url_for('emergencia_bp.visualizar_ultima_emergencia_preenchida', hospital_id=hospital.id) }}">
+                Abrir formulário da última emergência
+            </a>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const rota = {{ rota | tojson }};
+        const origem = {{ origem | tojson }};
+        const destino = {{ destino | tojson }};
+        const tipoVeiculo = "{{ tipo_veiculo or '' }}";
+        console.log("Tipo de veículo:", tipoVeiculo);
+        const hospitalLatLng = destino;
+        const emergenciaLatLng = origem;
+    </script>
+    <script src="{{ url_for('static', filename='javascript/mapa_hospital.js') }}"></script>
+    {% else %}
+    <p style="padding: 20px;">Nenhuma emergência a caminho no momento.</p>
+    {% endif %}
+</body>
+</html>

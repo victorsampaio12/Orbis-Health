@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Histórico de Emergências</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/historico.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Histórico de Emergências</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Data/Hora</th>
+                    <th>Nome do Paciente</th>
+                    <th>Causa do Socorro</th>
+                    <th>Prontuário</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emergencia in emergencias %}
+                <tr>
+                    <td>{{ emergencia.data_hora.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td>{{ emergencia.nome_paciente }}</td>
+                    <td>{{ emergencia.motivo_chamado }}</td>
+                    <td>
+                        {% if emergencia.caminho_pdf %}
+                        <a class="btn-download" href="{{ url_for('emergencia_bp.download_prontuario', emergencia_id=emergencia.id) }}">
+                            Baixar PDF
+                        </a>
+                        {% else %}
+                        <span class="sem-pdf">Não disponível</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <a class="btn-voltar" href="{{ url_for('hospital_bp.menu_hospital') }}">Voltar</a>
+    </div>
+</body>
+</html>

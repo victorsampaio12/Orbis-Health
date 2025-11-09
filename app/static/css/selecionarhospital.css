@@ -1,0 +1,75 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-image: url("../imagens/fundo.png");
+    background-size: cover;
+    background-position: center;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 3rem 2rem;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    width: 95%;
+    height: 100%;
+    max-width: 550px;
+    max-height: 750px;
+}
+
+h2 {
+    font-size: 1.8rem;
+    color: #000000;
+    margin-bottom: 2rem;
+    font-style: italic;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.btn-hospital {
+    background-color: #e7e7e7;
+    color: #CE2029;
+    border: none;
+    padding: 1.3rem 1.2rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-hospital:hover {
+    background-color: #e7e7e7a6;
+}
+
+.btn-voltar {
+    display: inline-block;
+    background-color: transparent;
+    color: #CE2029;
+    font-weight: bold;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border: 2px solid #CE2029;
+    border-radius: 6px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    margin-bottom: 1.5rem;
+}
+
+.btn-voltar:hover {
+    background-color: #CE2029;
+    color: white;
+}

@@ -1,0 +1,96 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    overflow: hidden; 
+}
+
+.modal-topo {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center;
+    background-color: #CE2029;
+    padding: 0.5rem;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    color: white;
+    z-index: 1000;
+}
+
+.left-group {
+    display: flex;
+    align-items: center;
+    gap: 3rem; 
+}
+
+.modal-topo h1 {
+    font-size: 3rem;
+    margin: 0;
+    font-style: italic;
+}
+
+.btn-voltar,
+.btn-perfil {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.3rem; 
+    width: auto;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-voltar img,
+.btn-perfil img {
+    width: 65px;
+    height: 65px;
+    object-fit: contain;
+}
+
+.menu-principal {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-wrap: wrap;  
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    padding: 2rem;
+    background-image: url("../imagens/fundobranco.jpg");
+}
+
+
+.botao-menu {
+    width: 550px;
+    height: 250px;
+    background-color: #fafafa;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    font-size: 1.9rem;
+    font-weight: bold;
+    color: #CE2029;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+    margin-right: 50px;
+}
+
+.botao-menu:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: scale(1.02);
+}
+
+.botao-menu img {
+    width: 20%;
+    height: auto; 
+    margin-right: 25px;
+}
+
+a {
+  text-decoration: none;
+}
