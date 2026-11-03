@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% import "_icons.html" as icons %}
+
+{% block content %}
+<div class="app-shell">
+    <aside class="app-sidebar">
+        <div class="sidebar-header">
+            <a class="sidebar-logo" href="{{ url_for('auth.dashboard') }}">
+                <span class="sidebar-logo-icon">+</span>
+                <span class="sidebar-logo-text">OrbisHealth</span>
+            </a>
+            <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-label="Recolher menu"
+                    data-url="{{ url_for('pages.preferencia_menu') }}">
+                {{ icons.icon("chevrons-left") }}
+            </button>
+        </div>
+
+        <nav class="sidebar-menu">
+            <span class="sidebar-section-label">Menu</span>
+
+            {% set hospital_endpoints = ['admin.listar_hospitais', 'admin.novo_hospital', 'admin.editar_hospital', 'admin.status_hospital'] %}
+            {% set socorrista_endpoints = ['admin.listar_socorristas', 'admin.novo_socorrista', 'admin.editar_socorrista', 'admin.status_socorrista'] %}
+            {% set admins_endpoints = ['admin.listar_admins', 'admin.novo_admin', 'admin.editar_admin', 'admin.status_admin', 'admin.excluir_admin'] %}
+            {% set cadastro_endpoints = ['admin.index'] + hospital_endpoints + socorrista_endpoints + admins_endpoints %}
+
+            {% if current_user.papel.value == "admin" %}
+                <a class="sidebar-link {{ 'active' if request.endpoint == 'auth.dashboard' else '' }}"
+                   href="{{ url_for('auth.dashboard') }}">
+                    {{ icons.icon("layout-dashboard") }} <span>Dashboard</span>
+                </a>
+
+                <a class="sidebar-subgroup-label {{ 'active' if request.endpoint == 'admin.index' else '' }}"
+                   href="{{ url_for('admin.index') }}">
+                    {{ icons.icon("file-plus-2") }} <span>Cadastro</span>
+                </a>
+                <a class="sidebar-sublink {{ 'active' if request.endpoint in hospital_endpoints else '' }}"
+                   href="{{ url_for('admin.listar_hospitais') }}">
+                    {{ icons.icon("building-2", size=16) }} <span>Hospitais</span>
+                </a>
+                <a class="sidebar-sublink {{ 'active' if request.endpoint in socorrista_endpoints else '' }}"
+                   href="{{ url_for('admin.listar_socorristas') }}">
+                    {{ icons.icon("siren", size=16) }} <span>Socorristas</span>
+                </a>
+                <a class="sidebar-sublink {{ 'active' if request.endpoint in admins_endpoints else '' }}"
+                   href="{{ url_for('admin.listar_admins') }}">
+                    {{ icons.icon("shield-check", size=16) }} <span>Administradores</span>
+                </a>
+            {% elif current_user.papel.value == "socorrista" %}
+                {% if ocorrencia_ativa_sidebar %}
+                    {% set pacientes_endpoints = ['ocorrencia.pacientes', 'ocorrencia.novo_paciente', 'ocorrencia.editar_paciente'] %}
+                    <a class="sidebar-link {{ 'active' if request.endpoint == 'ocorrencia.ver' else '' }}"
+                       href="{{ url_for('ocorrencia.ver', ocorrencia_id=ocorrencia_ativa_sidebar.id) }}">
+                        {{ icons.icon("activity") }} <span>Ocorrência Ativa</span>
+                    </a>
+                    <a class="sidebar-link {{ 'active' if request.endpoint in pacientes_endpoints else '' }}"
+                       href="{{ url_for('ocorrencia.pacientes', ocorrencia_id=ocorrencia_ativa_sidebar.id) }}">
+                        {{ icons.icon("user-round") }} <span>Paciente</span>
+                    </a>
+                    {% if ocorrencia_ativa_sidebar.status.value == "aberta" %}
+                        <a class="sidebar-link {{ 'active' if request.endpoint == 'ocorrencia.hospitais' else '' }}"
+                           href="{{ url_for('ocorrencia.hospitais', ocorrencia_id=ocorrencia_ativa_sidebar.id) }}">
+                            {{ icons.icon("building-2") }} <span>Lista de Hospitais</span>
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <a class="sidebar-link {{ 'active' if request.endpoint == 'ocorrencia.nova' else '' }}"
+                       href="{{ url_for('ocorrencia.nova') }}">
+                        {{ icons.icon("file-plus-2") }} <span>Criar Ocorrência</span>
+                    </a>
+                {% endif %}
+                <a class="sidebar-link {{ 'active' if request.endpoint and request.endpoint.startswith('inbox.') else '' }}"
+                   href="{{ url_for('inbox.index') }}">
+                    {{ icons.icon("inbox") }} <span>Inbox</span>
+                    {% if inbox_nao_lidas %}<span class="sidebar-badge">{{ inbox_nao_lidas }}</span>{% endif %}
+                </a>
+            {% elif current_user.papel.value == "hospital" %}
+                <a class="sidebar-link {{ 'active' if request.endpoint == 'auth.dashboard' else '' }}"
+                   href="{{ url_for('auth.dashboard') }}">
+                    {{ icons.icon("clipboard-list") }} <span>Lista de emergência</span>
+                </a>
+                <a class="sidebar-link {{ 'active' if request.endpoint == 'pages.historico_emergencias' else '' }}"
+                   href="{{ url_for('pages.historico_emergencias') }}">
+                    {{ icons.icon("history") }} <span>Histórico de emergências</span>
+                </a>
+                <a class="sidebar-link {{ 'active' if request.endpoint and request.endpoint.startswith('inbox.') else '' }}"
+                   href="{{ url_for('inbox.index') }}">
+                    {{ icons.icon("inbox") }} <span>Inbox</span>
+                    {% if inbox_nao_lidas %}<span class="sidebar-badge">{{ inbox_nao_lidas }}</span>{% endif %}
+                </a>
+            {% endif %}
+        </nav>
+
+        <div class="sidebar-footer">
+            <span class="sidebar-section-label">Outros</span>
+
+            <div class="sidebar-subgroup-label">
+                {{ icons.icon("settings") }} <span>Configurações</span>
+            </div>
+            <a class="sidebar-sublink {{ 'active' if request.endpoint == 'pages.perfil' else '' }}"
+               href="{{ url_for('pages.perfil') }}">
+                {{ icons.icon("user", size=16) }} <span>Perfil</span>
+            </a>
+            <a class="sidebar-sublink {{ 'active' if request.endpoint == 'pages.preferencias' else '' }}"
+               href="{{ url_for('pages.preferencias') }}">
+                {{ icons.icon("sliders-horizontal", size=16) }} <span>Preferências</span>
+            </a>
+
+            <a class="sidebar-link" href="{{ url_for('auth.logout') }}">
+                {{ icons.icon("log-out") }} <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <div class="app-main">
+        <header class="app-topbar">
+            <div class="topbar-search">
+                <span class="topbar-search-icon">{{ icons.icon("search", size=16) }}</span>
+                <input type="text" placeholder="Search" disabled>
+                <span class="topbar-search-mic">{{ icons.icon("mic", size=16) }}</span>
+            </div>
+
+            <div class="topbar-right">
+                {% if current_user.papel.value == "hospital" and current_user.hospital %}
+                    <span class="topbar-chip">{{ current_user.hospital.nome }}</span>
+                {% endif %}
+                <span class="topbar-chip" id="topbar-date"></span>
+                <span class="topbar-chip" id="topbar-time"></span>
+
+                <div class="topbar-profile">
+                    <div class="topbar-avatar">{{ current_user.nome | iniciais }}</div>
+                    <div class="topbar-profile-info">
+                        <strong>{{ current_user.nome }}</strong>
+                        <small>{{ current_user.papel.value }}</small>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="app-content">
+            {% block app_content %}{% endblock %}
+        </main>
+    </div>
+</div>
+{% endblock %}

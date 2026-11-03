@@ -1,0 +1,53 @@
+{% extends "app_base.html" %}
+
+{% block title %}Criar Ocorrência - OrbisHealth{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+
+{% block app_content %}
+<div class="mapa-page">
+    <div id="mapa-criar-ocorrencia" class="mapa-fullpane"></div>
+
+    <div class="ocorrencia-create-modal">
+        <div class="ocorrencia-create-modal-header">
+            <span class="modal-icon">+</span>
+            <h1>Criar Ocorrência</h1>
+        </div>
+
+        <form method="POST" id="form-criar-ocorrencia">
+            <label for="local">Local</label>
+            <input type="text" id="local" name="local" value="{{ dados.get('local', '') }}"
+                   placeholder="Endereço ou ponto de referência" required>
+            <p class="campo-hint" id="local-hint">Capturando localização...</p>
+
+            <label for="veiculo">Veículo</label>
+            <select id="veiculo" name="veiculo" required>
+                <option value="">Selecione...</option>
+                <option value="ambulancia" {{ "selected" if dados.get("veiculo") == "ambulancia" }}>Ambulância</option>
+                <option value="helicoptero" {{ "selected" if dados.get("veiculo") == "helicoptero" }}>Helicóptero</option>
+            </select>
+
+            <label for="comentarios">Comentários (Opcional)</label>
+            <textarea id="comentarios" name="comentarios" rows="3">{{ dados.get('comentarios', '') }}</textarea>
+
+            <input type="hidden" id="latitude" name="latitude" value="">
+            <input type="hidden" id="longitude" name="longitude" value="">
+
+            <button type="submit" class="btn btn-primary btn-block">Criar</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/geolocalizacao.js') }}"></script>
+<script src="{{ url_for('static', filename='js/mapa_criar_ocorrencia.js') }}"></script>
+<script>
+    iniciarMapaCriarOcorrencia({
+        urlGeocodificarReverso: "{{ url_for('ocorrencia.geocodificar_reverso') }}"
+    });
+</script>
+{% endblock %}

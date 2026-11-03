@@ -1,0 +1,48 @@
+{% extends "app_base.html" %}
+{% import "_icons.html" as icons %}
+
+{% block title %}Cadastro - OrbisHealth{% endblock %}
+
+{% block app_content %}
+<div class="cadastro-hub">
+    <div class="cadastro-hub-topo">
+        <h1>Cadastro</h1>
+        <p class="admin-subtitle">Gerencie os hospitais, socorristas e administradores do sistema.</p>
+    </div>
+
+    <div class="cadastro-hub-grade">
+        <a class="cadastro-card cadastro-card-hospital" href="{{ url_for('admin.listar_hospitais') }}">
+            <span class="cadastro-card-icone">{{ icons.icon("building-2", 32) }}</span>
+            <h2>Hospitais</h2>
+            <p>Cadastrar, editar e desativar hospitais de destino.</p>
+            <div class="cadastro-card-numeros">
+                <span><strong>{{ resumo.hospitais.ativos }}</strong> ativos</span>
+                <span class="cadastro-card-total">{{ resumo.hospitais.total }} no total</span>
+            </div>
+            <span class="cadastro-card-seta">{{ icons.icon("chevron-right", 18) }}</span>
+        </a>
+
+        <a class="cadastro-card cadastro-card-socorrista" href="{{ url_for('admin.listar_socorristas') }}">
+            <span class="cadastro-card-icone">{{ icons.icon("siren", 32) }}</span>
+            <h2>Socorristas</h2>
+            <p>Cadastrar, editar e desativar socorristas.</p>
+            <div class="cadastro-card-numeros">
+                <span><strong>{{ resumo.socorristas.ativos }}</strong> ativos</span>
+                <span class="cadastro-card-total">{{ resumo.socorristas.total }} no total</span>
+            </div>
+            <span class="cadastro-card-seta">{{ icons.icon("chevron-right", 18) }}</span>
+        </a>
+
+        <a class="cadastro-card cadastro-card-admin" href="{{ url_for('admin.listar_admins') }}">
+            <span class="cadastro-card-icone">{{ icons.icon("shield-check", 32) }}</span>
+            <h2>Administradores</h2>
+            <p>Cadastrar, editar, desativar e excluir administradores.</p>
+            <div class="cadastro-card-numeros">
+                <span><strong>{{ resumo.admins.ativos }}</strong> ativos</span>
+                <span class="cadastro-card-total">{{ resumo.admins.total }} no total</span>
+            </div>
+            <span class="cadastro-card-seta">{{ icons.icon("chevron-right", 18) }}</span>
+        </a>
+    </div>
+</div>
+{% endblock %}

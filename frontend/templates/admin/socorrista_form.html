@@ -1,0 +1,46 @@
+{% extends "app_base.html" %}
+
+{% block title %}{{ "Editar" if socorrista else "Novo" }} Socorrista - OrbisHealth{% endblock %}
+
+{% block app_content %}
+<div class="admin-page admin-page-largo">
+    <h1>{{ "Editar socorrista" if socorrista else "Novo socorrista" }}</h1>
+
+    <form class="admin-form admin-form-largo" method="POST">
+        <fieldset>
+            <legend>Dados do socorrista</legend>
+
+            <div class="form-row">
+                <div>
+                    <label for="nome">Nome</label>
+                    <input type="text" id="nome" name="nome" value="{{ dados.get('nome', '') }}" required>
+                </div>
+                <div>
+                    <label for="matricula">Matrícula</label>
+                    <input type="text" id="matricula" name="matricula" value="{{ dados.get('matricula', '') }}" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="telefone">Telefone (opcional)</label>
+                    <input type="tel" id="telefone" name="telefone" value="{{ dados.get('telefone', '') }}"
+                           placeholder="(61) 99999-9999">
+                </div>
+                <div>
+                    <label for="email">E-mail de login</label>
+                    <input type="email" id="email" name="email" value="{{ dados.get('email', '') }}" required>
+                </div>
+            </div>
+
+            <label for="senha">Senha {{ "(deixe em branco para manter a atual)" if socorrista else "" }}</label>
+            <input type="password" id="senha" name="senha" {{ "" if socorrista else "required" }}>
+        </fieldset>
+
+        <div class="admin-form-actions">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a class="btn btn-secondary" href="{{ url_for('admin.listar_socorristas') }}">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Login - OrbisHealth{% endblock %}
+
+{% block content %}
+<div class="login-screen">
+    <div class="login-hero" style="background-image: url('{{ url_for('static', filename='img/login-background.png') }}');">
+        <div class="login-hero-overlay"></div>
+
+        <img class="login-hero-logo" src="{{ url_for('static', filename='img/logo-white.png') }}" alt="OrbisHealth">
+
+        <div class="login-hero-text">
+            <h1>Quando cada segundo importa,<br>coordenação salva vidas.</h1>
+            <p>Acreditamos que todos os serviços de emergência merecem acesso
+                simples a soluções de gestão de padrão mundial.</p>
+            <div class="login-hero-dots">
+                <span class="dot dot-active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="login-form-panel">
+        <div class="login-language-switch">Português <span>&#9662;</span></div>
+
+        <div class="login-form-wrap">
+            <h2>Login</h2>
+            <p class="login-subtitle">Bem Vindo! Por Favor adicione seu email e senha.</p>
+
+            <form method="POST" action="{{ url_for('auth.login') }}">
+                <label for="email">Login</label>
+                <input type="email" id="email" name="email" required autofocus>
+
+                <label for="senha">Senha</label>
+                <input type="password" id="senha" name="senha" required>
+
+                <a class="forgot-password" href="#">Esqueceu a senha?</a>
+
+                <button type="submit">Login</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

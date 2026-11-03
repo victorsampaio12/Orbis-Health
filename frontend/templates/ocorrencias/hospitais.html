@@ -1,0 +1,59 @@
+{% extends "app_base.html" %}
+
+{% block title %}Selecionar Hospital - OrbisHealth{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+
+{% block app_content %}
+<div class="split-pane">
+    <div class="split-pane-list">
+        <h1>Selecionar Hospital de Destino</h1>
+        <p class="admin-subtitle">
+            Veículo: {{ "Ambulância" if ocorrencia.veiculo.value == "ambulancia" else "Helicóptero" }} —
+            mostrando só hospitais compatíveis e ativos.
+        </p>
+
+        {% for hospital, status, ocorrencias_ativas in hospitais %}
+        <div class="hospital-card">
+            <div class="hospital-card-header">
+                <h2>{{ hospital.nome }}</h2>
+                <span class="status-badge status-{{ status }}">
+                    {{ {"disponivel": "Disponível", "critico": "Crítico", "lotado": "Lotado"}[status] }}
+                </span>
+            </div>
+            <p class="hospital-card-info">{{ hospital.endereco }}</p>
+            <p class="hospital-card-info hospital-card-leitos">
+                {% if hospital.capacidade_maxima %}
+                    {% set livres = [hospital.capacidade_maxima - ocorrencias_ativas, 0] | max %}
+                    <strong>{{ ocorrencias_ativas }} de {{ hospital.capacidade_maxima }} leitos de emergência ocupados</strong>
+                    · {{ livres }} {{ "leito livre" if livres == 1 else "leitos livres" }}
+                {% else %}
+                    <strong>{{ ocorrencias_ativas }} {{ "leito de emergência ocupado" if ocorrencias_ativas == 1 else "leitos de emergência ocupados" }}</strong>
+                    · total de leitos não informado
+                {% endif %}
+            </p>
+            <form method="POST" action="{{ url_for('ocorrencia.selecionar_hospital', ocorrencia_id=ocorrencia.id) }}">
+                <input type="hidden" name="hospital_id" value="{{ hospital.id }}">
+                <button type="submit" class="btn btn-primary btn-block" {{ "disabled" if status == "lotado" }}>
+                    Selecionar
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <p>Nenhum hospital compatível encontrado para este veículo.</p>
+        {% endfor %}
+    </div>
+
+    <div id="mapa-hospitais" class="split-pane-map"></div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    var MAPA_HOSPITAIS_DADOS = {{ mapa_dados_json | safe }};
+</script>
+<script src="{{ url_for('static', filename='js/mapa_hospitais.js') }}"></script>
+{% endblock %}

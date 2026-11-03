@@ -1,0 +1,159 @@
+{% extends "app_base.html" %}
+{% import "_icons.html" as icons %}
+
+{% block title %}Histórico de emergências - OrbisHealth{% endblock %}
+
+{% block app_content %}
+<div class="historico-topo">
+    <div class="historico-titulo">
+        <span class="historico-icone">{{ icons.icon("file-text", 20) }}</span>
+        <div>
+            <h1>Histórico de emergências</h1>
+            <p class="admin-subtitle">Acompanhe todas as ocorrências registradas e seus respectivos atendimentos.</p>
+        </div>
+    </div>
+    <a class="btn btn-primary historico-exportar" href="{{ url_filtro('pages.historico_emergencias_exportar', pagina=none, por_pagina=none) }}">
+        {{ icons.icon("download", 16) }} Exportar Relatórios
+    </a>
+</div>
+
+<form class="historico-filtros" method="GET">
+    <div class="historico-filtro historico-filtro-busca">
+        {{ icons.icon("search", 16) }}
+        <input type="text" name="busca" value="{{ filtros.busca }}" placeholder="Buscar por ID, socorrista ou local...">
+    </div>
+
+    <div class="historico-filtro">
+        <label for="historico-status">Status</label>
+        <select id="historico-status" name="status" onchange="this.form.submit()">
+            <option value="">Todos</option>
+            <option value="pendente" {{ "selected" if filtros.status == "pendente" }}>Pendente</option>
+            <option value="atendimento" {{ "selected" if filtros.status == "atendimento" }}>Em Atendimento</option>
+            <option value="finalizada" {{ "selected" if filtros.status == "finalizada" }}>Finalizada</option>
+        </select>
+    </div>
+
+    <div class="historico-filtro">
+        <label>Período</label>
+        <div class="historico-periodo">
+            {{ icons.icon("calendar", 15) }}
+            <input type="date" name="data_inicio" value="{{ filtros.data_inicio or '' }}">
+            <span>–</span>
+            <input type="date" name="data_fim" value="{{ filtros.data_fim or '' }}">
+        </div>
+    </div>
+
+    <div class="historico-filtro">
+        <label for="historico-veiculo">Tipo de ocorrência</label>
+        <select id="historico-veiculo" name="veiculo" onchange="this.form.submit()">
+            <option value="">Todos</option>
+            <option value="ambulancia" {{ "selected" if filtros.veiculo == "ambulancia" }}>Ambulância</option>
+            <option value="helicoptero" {{ "selected" if filtros.veiculo == "helicoptero" }}>Helicóptero</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-secondary">Filtrar</button>
+    <a class="btn btn-secondary historico-limpar" href="{{ url_for('pages.historico_emergencias') }}">
+        {{ icons.icon("rotate-ccw", 14) }} Limpar filtros
+    </a>
+</form>
+
+<div class="historico-tabela-wrap">
+    <table class="historico-tabela">
+        <thead>
+            <tr>
+                <th>ID da emergência</th>
+                <th>Status</th>
+                <th>Tipo</th>
+                <th>Socorrista</th>
+                <th>Local da ocorrência</th>
+                <th>Hospital destino</th>
+                <th>Início</th>
+                <th>Fim</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in resultado.itens %}
+            <tr>
+                <td>
+                    <span class="historico-id">
+                        {{ icons.icon("ambulance" if item.veiculo == "ambulancia" else "helicopter", 16) }}
+                        {{ item.id | codigo_emg }}
+                    </span>
+                </td>
+                <td><span class="emg-status emg-status-{{ item.status }}">{{ item.status_rotulo }}</span></td>
+                <td>{{ item.veiculo_rotulo }}</td>
+                <td>{{ item.socorrista_nome }}</td>
+                <td title="{{ item.local }}">{{ item.local }}</td>
+                <td title="{{ item.hospital_nome }}">{{ item.hospital_nome }}</td>
+                <td data-utc="{{ item.criado_em.isoformat() }}Z" data-formato="datahora"></td>
+                {% if item.finalizado_em %}<td data-utc="{{ item.finalizado_em.isoformat() }}Z" data-formato="datahora"></td>{% else %}<td>—</td>{% endif %}
+                <td class="historico-acoes">
+                    <a class="historico-acao-btn" href="{{ url_for('ocorrencia.ver', ocorrencia_id=item.id) }}" title="Ver ocorrência">
+                        {{ icons.icon("eye", 16) }}
+                    </a>
+                    {% if item.pode_baixar_relatorio %}
+                    <a class="historico-acao-btn" href="{{ url_for('ocorrencia.relatorio', ocorrencia_id=item.id) }}" title="Ver relatório" target="_blank">
+                        {{ icons.icon("download", 16) }}
+                    </a>
+                    {% else %}
+                    <span class="historico-acao-btn historico-acao-btn-desabilitado" title="Relatório disponível só após finalizar">
+                        {{ icons.icon("download", 16) }}
+                    </span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="9" class="placeholder-page">Nenhuma emergência encontrada com esses filtros.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="historico-paginacao">
+    <span class="historico-paginacao-resumo">
+        {% if resultado.total %}
+        Exibindo {{ (resultado.pagina - 1) * resultado.por_pagina + 1 }}
+        a {{ [resultado.pagina * resultado.por_pagina, resultado.total] | min }}
+        de {{ resultado.total }} resultados
+        {% else %}
+        Nenhum resultado
+        {% endif %}
+    </span>
+
+    <div class="historico-paginacao-controles">
+        <select class="historico-por-pagina" onchange="location.href=this.value">
+            {% for opcao in (8, 16, 24) %}
+            <option value="{{ url_filtro(por_pagina=opcao, pagina=1) }}" {{ "selected" if resultado.por_pagina == opcao }}>
+                {{ opcao }} por página
+            </option>
+            {% endfor %}
+        </select>
+
+        {% if resultado.pagina > 1 %}
+        <a class="historico-pagina-btn" href="{{ url_filtro(pagina=resultado.pagina - 1) }}" aria-label="Página anterior">{{ icons.icon("chevron-left", 16) }}</a>
+        {% else %}
+        <span class="historico-pagina-btn historico-pagina-btn-desabilitado">{{ icons.icon("chevron-left", 16) }}</span>
+        {% endif %}
+
+        {% for pagina in paginas_visiveis %}
+            {% if pagina is none %}
+            <span class="historico-pagina-reticencias">…</span>
+            {% elif pagina == resultado.pagina %}
+            <span class="historico-pagina-btn historico-pagina-atual">{{ pagina }}</span>
+            {% else %}
+            <a class="historico-pagina-btn" href="{{ url_filtro(pagina=pagina) }}">{{ pagina }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if resultado.pagina < resultado.total_paginas %}
+        <a class="historico-pagina-btn" href="{{ url_filtro(pagina=resultado.pagina + 1) }}" aria-label="Próxima página">{{ icons.icon("chevron-right", 16) }}</a>
+        {% else %}
+        <span class="historico-pagina-btn historico-pagina-btn-desabilitado">{{ icons.icon("chevron-right", 16) }}</span>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

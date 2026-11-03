@@ -1,0 +1,50 @@
+{% extends "app_base.html" %}
+
+{% block title %}Socorristas - OrbisHealth{% endblock %}
+
+{% block app_content %}
+<div class="admin-page">
+    <div class="admin-page-header">
+        <h1>Socorristas</h1>
+        <a class="btn btn-primary" href="{{ url_for('admin.novo_socorrista') }}">+ Novo socorrista</a>
+    </div>
+
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Matrícula</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for socorrista in socorristas %}
+            <tr>
+                <td>{{ socorrista.usuario.nome }}</td>
+                <td>{{ socorrista.usuario.email }}</td>
+                <td>{{ socorrista.matricula }}</td>
+                <td>
+                    <span class="status-badge {{ 'status-ativo' if socorrista.usuario.ativo else 'status-inativo' }}">
+                        {{ "Ativo" if socorrista.usuario.ativo else "Inativo" }}
+                    </span>
+                </td>
+                <td class="admin-table-actions">
+                    <a class="btn btn-secondary" href="{{ url_for('admin.editar_socorrista', socorrista_id=socorrista.id) }}">Editar</a>
+                    <form method="POST" action="{{ url_for('admin.status_socorrista', socorrista_id=socorrista.id) }}">
+                        <button type="submit" class="btn {{ 'btn-danger' if socorrista.usuario.ativo else 'btn-secondary' }}">
+                            {{ "Desativar" if socorrista.usuario.ativo else "Reativar" }}
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5">Nenhum socorrista cadastrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

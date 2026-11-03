@@ -1,0 +1,56 @@
+{% extends "app_base.html" %}
+
+{% block title %}Hospitais - OrbisHealth{% endblock %}
+
+{% block app_content %}
+<div class="admin-page">
+    <div class="admin-page-header">
+        <h1>Hospitais</h1>
+        <a class="btn btn-primary" href="{{ url_for('admin.novo_hospital') }}">+ Novo hospital</a>
+    </div>
+
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Endereço</th>
+                <th>Heliponto</th>
+                <th>Garagem</th>
+                <th>Capacidade</th>
+                <th>Responsável</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for hospital in hospitais %}
+            <tr>
+                <td>{{ hospital.nome }}</td>
+                <td>{{ hospital.endereco }}</td>
+                <td>{{ "Sim" if hospital.tem_heliponto else "Não" }}</td>
+                <td>{{ "Sim" if hospital.tem_garagem else "Não" }}</td>
+                <td>{{ hospital.capacidade_maxima or "-" }}</td>
+                <td>{{ hospital.usuario.nome }} ({{ hospital.usuario.email }})</td>
+                <td>
+                    <span class="status-badge {{ 'status-ativo' if hospital.ativo else 'status-inativo' }}">
+                        {{ "Ativo" if hospital.ativo else "Desativado" }}
+                    </span>
+                </td>
+                <td class="admin-table-actions">
+                    <a class="btn btn-secondary" href="{{ url_for('admin.editar_hospital', hospital_id=hospital.id) }}">Editar</a>
+                    <form method="POST" action="{{ url_for('admin.status_hospital', hospital_id=hospital.id) }}">
+                        <button type="submit" class="btn {{ 'btn-danger' if hospital.ativo else 'btn-secondary' }}">
+                            {{ "Desativar" if hospital.ativo else "Reativar" }}
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8">Nenhum hospital cadastrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "app_base.html" %}
+
+{% block title %}Preferências - OrbisHealth{% endblock %}
+
+{% macro interruptor(nome, titulo, descricao, ligado) %}
+<label class="pref-linha">
+    <span class="pref-texto">
+        <strong>{{ titulo }}</strong>
+        <small>{{ descricao }}</small>
+    </span>
+    <span class="switch">
+        <input type="checkbox" name="{{ nome }}" {{ "checked" if ligado }}>
+        <span class="switch-trilho"></span>
+    </span>
+</label>
+{% endmacro %}
+
+{% block app_content %}
+<div class="admin-page">
+    <h1>Preferências</h1>
+    <p class="admin-subtitle">Ajustes da sua conta — valem em qualquer computador em que você entrar.</p>
+
+    <form class="admin-form" method="POST" action="{{ url_for('pages.preferencias') }}">
+        <fieldset>
+            <legend>Navegação</legend>
+            {{ interruptor("menu_recolhido", "Menu lateral recolhido por padrão",
+                           "Abre o sistema com o menu só com os ícones, liberando mais espaço na tela.",
+                           preferencias.menu_recolhido) }}
+        </fieldset>
+
+        {% if current_user.papel.value in ["socorrista", "hospital"] %}
+        <fieldset>
+            <legend>Sons de notificação</legend>
+            {{ interruptor("som_chat", "Nova mensagem no chat",
+                           "Toca um aviso quando o " ~ ("hospital" if current_user.papel.value == "socorrista" else "socorrista") ~ " te envia uma mensagem.",
+                           preferencias.som_chat) }}
+            {% if current_user.papel.value == "hospital" %}
+            {{ interruptor("som_nova_emergencia", "Nova emergência a caminho",
+                           "Toca um aviso quando uma ocorrência passa a ter o seu hospital como destino.",
+                           preferencias.som_nova_emergencia) }}
+            {% endif %}
+            <button type="button" class="btn btn-secondary pref-testar" id="btn-testar-som">Ouvir o som</button>
+        </fieldset>
+        {% endif %}
+
+        <fieldset>
+            <legend>Formato de hora</legend>
+            <div class="segmentado">
+                <label>
+                    <input type="radio" name="formato_hora" value="24h" {{ "checked" if preferencias.formato_hora == "24h" }}>
+                    <span>24 horas <small>14:30</small></span>
+                </label>
+                <label>
+                    <input type="radio" name="formato_hora" value="12h" {{ "checked" if preferencias.formato_hora == "12h" }}>
+                    <span>12 horas <small>2:30 PM</small></span>
+                </label>
+            </div>
+            <p class="campo-hint">Vale para o relógio do topo, o chat e os horários da lista de emergência.</p>
+        </fieldset>
+
+        <div class="admin-form-actions">
+            <button type="submit" class="btn btn-primary">Salvar preferências</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const botaoSom = document.getElementById("btn-testar-som");
+    if (botaoSom) botaoSom.addEventListener("click", () => window.OrbisPrefs.tocarSom());
+</script>
+{% endblock %}

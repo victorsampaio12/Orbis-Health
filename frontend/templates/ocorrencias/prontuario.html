@@ -1,0 +1,100 @@
+{% extends "app_base.html" %}
+{% import "_icons.html" as icons %}
+
+{% block title %}Pré-prontuário {{ ocorrencia.id | codigo_emg }} - OrbisHealth{% endblock %}
+
+{% macro campo(rotulo, valor, unidade="") %}
+<div class="prontuario-campo">
+    <span class="info-label">{{ rotulo }}</span>
+    <span>{% if valor is none or valor == "" %}—{% else %}{{ valor }}{{ unidade }}{% endif %}</span>
+</div>
+{% endmacro %}
+
+{% block app_content %}
+<div class="admin-page admin-page-largo">
+    <div class="admin-page-header">
+        <div>
+            <h1>Pré-prontuário de Atendimento</h1>
+            <p class="admin-subtitle">
+                {{ ocorrencia.id | codigo_emg }} — {{ "Ambulância" if ocorrencia.veiculo.value == "ambulancia" else "Helicóptero" }}
+                · {{ ocorrencia.local }}
+            </p>
+        </div>
+        <a class="btn btn-secondary" href="{{ url_for('ocorrencia.ver', ocorrencia_id=ocorrencia.id) }}">Voltar à ocorrência</a>
+    </div>
+
+    {% for paciente in pacientes %}
+    <section class="prontuario-paciente">
+        <div class="prontuario-paciente-topo">
+            <h2>{{ paciente.nome }}</h2>
+            <span class="priority-badge priority-{{ paciente.prioridade.value }}">
+                Prioridade {{ {"critica": "crítica", "alta": "alta", "media": "média"}[paciente.prioridade.value] }}
+            </span>
+        </div>
+
+        <h3>Paciente</h3>
+        <div class="prontuario-grid">
+            {{ campo("Idade", paciente.idade) }}
+            {{ campo("CPF", paciente.cpf) }}
+            {{ campo("Documentos em mãos", "Sim" if paciente.documentos_em_maos else ("Não" if paciente.documentos_em_maos is false else none)) }}
+        </div>
+
+        <h3>Motivo do chamado</h3>
+        <p class="prontuario-texto">{{ paciente.motivo_chamado }}</p>
+
+        <h3>Sinais vitais</h3>
+        <div class="prontuario-grid">
+            {{ campo("Pressão arterial", paciente.pressao_arterial) }}
+            {{ campo("Frequência cardíaca", paciente.frequencia_cardiaca, " bpm") }}
+            {{ campo("Frequência respiratória", paciente.frequencia_respiratoria, " irpm") }}
+            {{ campo("Saturação O₂", paciente.saturacao_o2, "%") }}
+            {{ campo("Temperatura", paciente.temperatura, " °C") }}
+            {{ campo("Glasgow", paciente.glasgow) }}
+            {{ campo("Nível de consciência", paciente.nivel_consciencia) }}
+        </div>
+
+        <h3>Evolução no transporte</h3>
+        <div class="prontuario-chips">
+            {% if paciente.parada_cardiorrespiratoria %}<span class="priority-badge priority-critica">Parada cardiorrespiratória</span>{% endif %}
+            {% if paciente.agravamento_registrado %}<span class="priority-badge priority-alta">Agravamento registrado</span>{% endif %}
+            {% if paciente.estavel %}<span class="priority-badge priority-media">Estável</span>{% endif %}
+            {% if paciente.melhorando %}<span class="priority-badge priority-media">Melhorando</span>{% endif %}
+            {% if not (paciente.parada_cardiorrespiratoria or paciente.agravamento_registrado or paciente.estavel or paciente.melhorando) %}
+            <span class="prontuario-vazio">Nenhuma evolução registrada.</span>
+            {% endif %}
+        </div>
+
+        {% if paciente.observacao %}
+        <h3>Observações</h3>
+        <p class="prontuario-texto">{{ paciente.observacao }}</p>
+        {% endif %}
+
+        <h3>Diagnóstico</h3>
+        <p class="prontuario-texto">{{ paciente.diagnostico or "—" }}</p>
+
+        <h3>Anexos {% if paciente.anexos %}<span class="anexos-contagem">{{ paciente.anexos | length }}</span>{% endif %}</h3>
+        {% if paciente.anexos %}
+        <div class="anexos-grade anexos-galeria">
+            {% for anexo in paciente.anexos %}
+            <a class="anexo-item" data-galeria="paciente-{{ paciente.id }}"
+               href="{{ url_for('ocorrencia.anexo', ocorrencia_id=ocorrencia.id, anexo_id=anexo.id) }}"
+               data-baixar="{{ url_for('ocorrencia.anexo', ocorrencia_id=ocorrencia.id, anexo_id=anexo.id, baixar=1) }}"
+               data-legenda="{{ anexo.nome_original }}" data-enviada="{{ anexo.criado_em.isoformat() }}Z">
+                <img src="{{ url_for('ocorrencia.anexo', ocorrencia_id=ocorrencia.id, anexo_id=anexo.id, miniatura=1) }}"
+                     alt="{{ anexo.nome_original }}" loading="lazy">
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="prontuario-vazio">Nenhuma foto anexada.</p>
+        {% endif %}
+    </section>
+    {% else %}
+    <p class="placeholder-page">Nenhum paciente cadastrado nesta ocorrência ainda.</p>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/anexos.js') }}"></script>
+{% endblock %}

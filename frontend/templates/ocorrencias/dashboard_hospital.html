@@ -1,0 +1,88 @@
+{% extends "app_base.html" %}
+{% import "_icons.html" as icons %}
+
+{% block title %}Lista de emergência - OrbisHealth{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+
+{% block app_content %}
+<div class="split-pane">
+    <div class="split-pane-list emg-lista">
+        <div class="emg-lista-topo">
+            <h1>Lista de emergência</h1>
+            <span class="emg-contagem">{{ emergencias | selectattr("ativa") | list | length }} a caminho</span>
+        </div>
+
+        {% for e in emergencias %}
+        <article class="emg-card {{ 'emg-card-finalizada' if not e.ativa }}" data-id="{{ e.id }}" tabindex="0">
+            <header class="emg-card-topo">
+                <span class="emg-card-icone">{{ icons.icon("helicopter" if e.veiculo == "helicoptero" else "ambulance", 18) }}</span>
+                <strong>{{ e.id | codigo_emg }}</strong>
+                <span class="emg-status emg-status-{{ e.status }}">{{ e.status_rotulo }}</span>
+            </header>
+
+            <div class="emg-progresso">
+                <div class="emg-progresso-trilho">
+                    <div class="emg-progresso-barra" style="width: {{ (e.progresso * 100) | round(1) }}%"></div>
+                    <span class="emg-progresso-ponto" style="left: {{ (e.progresso * 100) | round(1) }}%"></span>
+                </div>
+                <div class="emg-progresso-rotulos">
+                    <span>Local do socorro<small data-utc="{{ e.criado_em }}" data-formato="datahora"></small></span>
+                    <span class="emg-progresso-destino">{{ hospital.nome }}
+                        {% if e.finalizado_em %}
+                        <small data-utc="{{ e.finalizado_em }}" data-formato="datahora"></small>
+                        {% elif e.tempo_estimado_min is not none %}
+                        <small class="emg-eta">≈ {{ e.tempo_estimado_min | round(1) }} min</small>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <div class="emg-socorrista">
+                <span class="emg-avatar">{{ e.socorrista.nome | iniciais }}</span>
+                <div class="emg-socorrista-info">
+                    <strong>{{ e.socorrista.nome }}</strong>
+                    <small>Socorrista</small>
+                </div>
+                <div class="emg-contato">
+                    {% if e.socorrista.telefone %}
+                    <a class="emg-icone-btn" href="tel:{{ e.socorrista.telefone }}" title="Ligar para {{ e.socorrista.telefone }}">{{ icons.icon("phone", 16) }}</a>
+                    {% endif %}
+                    <a class="emg-icone-btn" href="mailto:{{ e.socorrista.email }}" title="Enviar e-mail">{{ icons.icon("mail", 16) }}</a>
+                </div>
+            </div>
+
+            <div class="emg-card-acoes">
+                <a class="btn btn-secondary" href="{{ url_for('ocorrencia.ver', ocorrencia_id=e.id) }}">Abrir ocorrência</a>
+                <a class="btn btn-primary" href="{{ url_for('ocorrencia.prontuario', ocorrencia_id=e.id) }}">
+                    {{ icons.icon("file-text", 14) }} Pré-prontuário{{ " (%d)" % e.total_pacientes if e.total_pacientes }}
+                    {% if e.total_fotos %}<span class="emg-fotos" title="{{ e.total_fotos }} foto(s) anexada(s)">{{ icons.icon("camera", 14) }} {{ e.total_fotos }}</span>{% endif %}
+                </a>
+            </div>
+        </article>
+        {% else %}
+        <p class="placeholder-page">Nenhuma ocorrência direcionada a este hospital ainda.</p>
+        {% endfor %}
+    </div>
+
+    <div class="emg-mapa-wrap">
+        <div id="mapa-emergencias"></div>
+        <div class="emg-paineis" id="emg-paineis" hidden></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/geolocalizacao.js') }}"></script>
+<script src="{{ url_for('static', filename='js/icones_mapa.js') }}"></script>
+<script src="{{ url_for('static', filename='js/painel_hospital.js') }}"></script>
+<script>
+    iniciarPainelHospital({{ painel_json | safe }}, {
+        urlProntuario: "{{ url_for('ocorrencia.prontuario', ocorrencia_id=0) }}",
+    });
+</script>
+{% endblock %}

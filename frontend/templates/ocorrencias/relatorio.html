@@ -1,0 +1,42 @@
+{% extends "app_base.html" %}
+
+{% block title %}Relatório - Ocorrência #{{ ocorrencia.id }} - OrbisHealth{% endblock %}
+
+{% block app_content %}
+<div class="relatorio-page">
+    <h1>Relatório Final — Ocorrência #{{ ocorrencia.id }}</h1>
+
+    <div class="relatorio-card">
+        <div class="relatorio-secao">
+            <h2>Atendimento</h2>
+            <p><strong>Socorrista:</strong> {{ relatorio.socorrista_nome }} (matrícula {{ relatorio.socorrista_matricula }})</p>
+            <p><strong>Hospital de destino:</strong> {{ relatorio.hospital_nome or "-" }}</p>
+            <p><strong>Tempo total de atendimento:</strong> {{ relatorio.tempo_atendimento_min }} minutos</p>
+            <p><strong>Finalizado em:</strong> {% if relatorio.finalizado_em %}<span data-utc="{{ relatorio.finalizado_em.isoformat() }}Z" data-formato="datahora"></span>{% else %}-{% endif %}</p>
+        </div>
+
+        <div class="relatorio-secao">
+            <h2>Desfecho</h2>
+            <p>{{ relatorio.desfecho or "-" }}</p>
+        </div>
+
+        <div class="relatorio-secao">
+            <h2>Pacientes</h2>
+            {% for paciente in relatorio.pacientes %}
+            <div class="relatorio-paciente">
+                <p><strong>{{ paciente.nome }}</strong></p>
+                <p>CPF: {{ paciente.cpf or "-" }} — Idade: {{ paciente.idade or "-" }}</p>
+                <p>Diagnóstico: {{ paciente.diagnostico or "-" }}</p>
+                {% if paciente.fotos %}<p>Fotos anexadas: {{ paciente.fotos }} (ver no <a href="{{ url_for('ocorrencia.prontuario', ocorrencia_id=ocorrencia.id) }}">pré-prontuário</a>)</p>{% endif %}
+            </div>
+            {% else %}
+            <p>Nenhum paciente registrado.</p>
+            {% endfor %}
+        </div>
+
+        <a class="btn btn-secondary" href="{{ url_for('ocorrencia.ver', ocorrencia_id=ocorrencia.id) }}">
+            Voltar para a ocorrência
+        </a>
+    </div>
+</div>
+{% endblock %}

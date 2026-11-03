@@ -1,0 +1,182 @@
+{% extends "app_base.html" %}
+{% import "_icons.html" as icons %}
+
+{% block title %}{{ "Editar" if paciente else "Novo" }} Prontuário - OrbisHealth{% endblock %}
+
+{% block app_content %}
+<div class="admin-page admin-page-largo">
+    <h1>Cadastro de Emergência</h1>
+
+    <form class="admin-form admin-form-largo" method="POST" enctype="multipart/form-data">
+        <fieldset>
+            <legend>Pré-Prontuário de Atendimento</legend>
+
+            <div class="form-row">
+                <div>
+                    <label>Data/Hora</label>
+                    <input type="text" {% if paciente %}data-utc="{{ paciente.criado_em.isoformat() }}Z" data-formato="datahora"{% else %}value="Registrado ao salvar"{% endif %} disabled>
+                </div>
+                <div>
+                    <label>Profissional</label>
+                    <input type="text" value="{{ ocorrencia.socorrista.usuario.nome }}" disabled>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Dados do Paciente</legend>
+
+            <label for="nome">Nome completo</label>
+            <input type="text" id="nome" name="nome" value="{{ dados.get('nome', '') }}" required>
+
+            <div class="form-row">
+                <div>
+                    <label for="cpf">CPF (opcional)</label>
+                    <input type="text" id="cpf" name="cpf" value="{{ dados.get('cpf', '') }}">
+                </div>
+                <div>
+                    <label for="idade">Idade aparente ou real</label>
+                    <input type="text" id="idade" name="idade" value="{{ dados.get('idade', '') }}">
+                </div>
+            </div>
+
+            <label>Documentos em mãos?</label>
+            <div class="radio-group">
+                <label class="radio-label">
+                    <input type="radio" name="documentos_em_maos" value="sim" {{ "checked" if dados.get('documentos_em_maos') == 'sim' }}>
+                    Sim
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="documentos_em_maos" value="nao" {{ "checked" if dados.get('documentos_em_maos') == 'nao' }}>
+                    Não
+                </label>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Causa Socorro</legend>
+
+            <label for="motivo_chamado">Motivo do chamado</label>
+            <textarea id="motivo_chamado" name="motivo_chamado" rows="2" required>{{ dados.get('motivo_chamado', '') }}</textarea>
+        </fieldset>
+
+        <fieldset>
+            <legend>Sinais Vitais</legend>
+
+            <div class="form-row">
+                <div>
+                    <label for="pressao_arterial">Pressão Arterial</label>
+                    <input type="text" id="pressao_arterial" name="pressao_arterial" placeholder="ex: 120/80"
+                           value="{{ dados.get('pressao_arterial', '') }}">
+                </div>
+                <div>
+                    <label for="frequencia_cardiaca">Frequência Cardíaca (bpm)</label>
+                    <input type="number" id="frequencia_cardiaca" name="frequencia_cardiaca"
+                           value="{{ dados.get('frequencia_cardiaca', '') }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="frequencia_respiratoria">Frequência Respiratória (rpm)</label>
+                    <input type="number" id="frequencia_respiratoria" name="frequencia_respiratoria"
+                           value="{{ dados.get('frequencia_respiratoria', '') }}">
+                </div>
+                <div>
+                    <label for="saturacao_o2">Saturação de O2 (%)</label>
+                    <input type="number" id="saturacao_o2" name="saturacao_o2"
+                           value="{{ dados.get('saturacao_o2', '') }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="temperatura">Temperatura (°C)</label>
+                    <input type="text" id="temperatura" name="temperatura"
+                           value="{{ dados.get('temperatura', '') }}">
+                </div>
+                <div>
+                    <label for="glasgow">Escala de Glasgow</label>
+                    <input type="number" id="glasgow" name="glasgow" min="3" max="15"
+                           value="{{ dados.get('glasgow', '') }}">
+                </div>
+            </div>
+
+            <label for="nivel_consciencia">Nível de Consciência</label>
+            <input type="text" id="nivel_consciencia" name="nivel_consciencia"
+                   value="{{ dados.get('nivel_consciencia', '') }}">
+
+            <label for="diagnostico">Diagnóstico (opcional)</label>
+            <textarea id="diagnostico" name="diagnostico" rows="2">{{ dados.get('diagnostico', '') }}</textarea>
+        </fieldset>
+
+        <fieldset>
+            <legend>Evolução no Transporte</legend>
+
+            <div class="checkbox-grade">
+            <label class="checkbox-label">
+                <input type="checkbox" name="estavel" {{ "checked" if dados.get('estavel') == 'on' }}>
+                Estável
+            </label>
+            <label class="checkbox-label">
+                <input type="checkbox" name="agravamento_registrado" {{ "checked" if dados.get('agravamento_registrado') == 'on' }}>
+                Agravamento
+            </label>
+            <label class="checkbox-label">
+                <input type="checkbox" name="melhorando" {{ "checked" if dados.get('melhorando') == 'on' }}>
+                Melhorando
+            </label>
+            <label class="checkbox-label">
+                <input type="checkbox" name="parada_cardiorrespiratoria" {{ "checked" if dados.get('parada_cardiorrespiratoria') == 'on' }}>
+                Parada cardiorrespiratória
+            </label>
+            </div>
+
+            <label for="observacao">Observação</label>
+            <textarea id="observacao" name="observacao" rows="2">{{ dados.get('observacao', '') }}</textarea>
+        </fieldset>
+
+        <fieldset>
+            <legend>Anexos (fotos)</legend>
+            <p class="campo-hint">
+                Fotos da cena, de ferimentos, de exames ou de documentos do paciente. Ficam visíveis só
+                para você e para o hospital de destino. JPG, PNG ou WEBP — até 10 MB cada, no máximo
+                10 por paciente. A localização gravada pelo celular na foto é removida ao enviar.
+            </p>
+
+            {% if paciente and paciente.anexos %}
+            <div class="anexos-grade">
+                {% for anexo in paciente.anexos %}
+                <label class="anexo-item anexo-existente" title="{{ anexo.nome_original }}">
+                    <img src="{{ url_for('ocorrencia.anexo', ocorrencia_id=ocorrencia.id, anexo_id=anexo.id, miniatura=1) }}"
+                         alt="{{ anexo.nome_original }}" loading="lazy">
+                    <span class="anexo-remover">
+                        <input type="checkbox" name="remover_anexo" value="{{ anexo.id }}">
+                        {{ icons.icon("trash-2", 14) }} Remover
+                    </span>
+                </label>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <label class="anexo-soltar" for="anexos" id="anexo-soltar">
+                <span class="anexo-soltar-icone">{{ icons.icon("camera", 24) }}</span>
+                <strong>Adicionar fotos</strong>
+                <small>Clique para escolher ou arraste as imagens até aqui — no celular, dá para tirar a foto na hora.</small>
+            </label>
+            <input type="file" id="anexos" name="anexos" class="anexo-input"
+                   accept="image/jpeg,image/png,image/webp" multiple>
+            <div class="anexos-grade" id="anexos-previa" hidden></div>
+        </fieldset>
+
+        <div class="admin-form-actions">
+            <button type="submit" class="btn btn-primary">{{ "Salvar" if paciente else "Cadastrar" }}</button>
+            <a class="btn btn-secondary" href="{{ url_for('ocorrencia.pacientes', ocorrencia_id=ocorrencia.id) }}">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/anexos.js') }}"></script>
+{% endblock %}

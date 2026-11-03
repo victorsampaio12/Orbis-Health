@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="{{ 'sidebar-collapsed' if preferencias.menu_recolhido }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}OrbisHealth{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Leaflet/Socket.IO (CDN) e os blocos do mapa: abre a conexão cedo pra
+         as telas com mapa carregarem mais rápido. -->
+    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="preconnect" href="https://cdn.socket.io">
+    <link rel="dns-prefetch" href="https://a.tile.openstreetmap.org">
+    <link rel="dns-prefetch" href="https://b.tile.openstreetmap.org">
+    <link rel="dns-prefetch" href="https://c.tile.openstreetmap.org">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/acabamento.css') }}">
+
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+    <meta name="theme-color" content="#8c2b2b">
+    <link rel="icon" href="{{ url_for('static', filename='img/icon-192.png') }}">
+    <!-- iOS Safari não lê o manifest para virar "app instalado" — precisa
+         destas tags específicas para abrir em tela cheia sem barra do Safari. -->
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="OrbisHealth">
+
+    {% block extra_head %}{% endblock %}
+    <script>window.OrbisPrefs = {{ preferencias | tojson }};</script>
+</head>
+<body>
+    <div id="flash-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{{ url_for('static', filename='js/preferencias.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/flash.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/acabamento.js') }}"></script>
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("{{ url_for('service_worker') }}");
+            });
+        }
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

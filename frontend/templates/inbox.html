@@ -1,0 +1,144 @@
+{% extends "app_base.html" %}
+{% import "_icons.html" as icons %}
+
+{% block title %}Inbox - OrbisHealth{% endblock %}
+
+{% block app_content %}
+<div class="split-pane">
+    <div class="inbox-lista">
+        <div class="inbox-lista-topo">
+            <span class="inbox-lista-icone">{{ icons.icon("inbox", 20) }}</span>
+            <div>
+                <h1>Inbox</h1>
+                <p class="admin-subtitle">Mensagens e Comunicados</p>
+            </div>
+        </div>
+
+        <div class="inbox-busca">
+            {{ icons.icon("search", 16) }}
+            <input type="text" id="inbox-busca" placeholder="Buscar conversas..." autocomplete="off">
+        </div>
+
+        <div class="inbox-abas">
+            <button type="button" class="inbox-aba inbox-aba-ativa" data-filtro="todas">Todas</button>
+            <button type="button" class="inbox-aba" data-filtro="nao-lidas">
+                Não lidas
+                <span class="inbox-aba-badge" id="inbox-aba-contagem" hidden>0</span>
+            </button>
+        </div>
+
+        <div class="inbox-itens" id="inbox-itens">
+            {% for conversa in conversas %}
+            <a class="inbox-item {{ 'inbox-item-ativa' if ocorrencia_ativa and conversa.ocorrencia_id == ocorrencia_ativa.id else '' }}"
+               href="{{ url_for('inbox.conversa', ocorrencia_id=conversa.ocorrencia_id) }}"
+               data-nao-lidas="{{ conversa.nao_lidas }}"
+               data-busca="{{ (conversa.titulo ~ ' ' ~ (conversa.ultima_mensagem or '')) | lower }}">
+                <span class="inbox-avatar">{{ conversa.titulo | iniciais }}</span>
+                <div class="inbox-item-corpo">
+                    <div class="inbox-item-header">
+                        <strong>{{ conversa.titulo }}</strong>
+                        <span class="inbox-item-hora" data-utc="{{ conversa.ultima_em.isoformat() }}Z" data-formato="hora"></span>
+                    </div>
+                    <div class="inbox-item-rodape">
+                        <p class="inbox-item-preview">{{ conversa.ultima_mensagem or "Nenhuma mensagem trocada" }}</p>
+                        <span class="inbox-badge" {{ "hidden" if not conversa.nao_lidas }}>{{ conversa.nao_lidas }}</span>
+                    </div>
+                </div>
+            </a>
+            {% else %}
+            <p class="placeholder-page">Nenhuma conversa finalizada ainda.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="inbox-conversa">
+        {% if ocorrencia_ativa %}
+        <div class="chat-cabecalho">
+            <span class="inbox-avatar">{{ outro_nome | iniciais }}</span>
+            <div class="chat-cabecalho-info">
+                <strong>{{ outro_nome }}</strong>
+                <span>{{ outro_papel }}</span>
+            </div>
+            {% if outro_telefone %}
+            <a class="inbox-telefone-btn" href="tel:{{ outro_telefone }}" title="Ligar para {{ outro_telefone }}">
+                {{ icons.icon("phone", 18) }}
+            </a>
+            {% endif %}
+        </div>
+        <div class="chat-painel" id="chat-painel">
+            <div class="chat-mensagens" id="chat-mensagens"></div>
+            <div class="chat-form-desabilitada" title="Esta conversa foi encerrada">
+                {{ icons.icon("paperclip", 18) }}
+                <input type="text" placeholder="Conversa encerrada" disabled>
+                <button type="button" disabled>{{ icons.icon("send", 16) }}</button>
+            </div>
+        </div>
+        {% else %}
+        <div class="inbox-vazio">
+            {{ icons.icon("inbox", 40) }}
+            <p>Selecione uma conversa à esquerda.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    window.OrbisPrefs.formatarElementosData();
+
+    (function () {
+        const busca = document.getElementById("inbox-busca");
+        const abas = document.querySelectorAll(".inbox-aba");
+        const itens = document.querySelectorAll(".inbox-item");
+        let filtroAtivo = "todas";
+
+        let totalNaoLidas = 0;
+        itens.forEach((item) => { totalNaoLidas += Number(item.dataset.naoLidas || 0); });
+        const contagem = document.getElementById("inbox-aba-contagem");
+        if (totalNaoLidas > 0) {
+            contagem.textContent = totalNaoLidas;
+            contagem.hidden = false;
+        }
+
+        function aplicarFiltros() {
+            const termo = busca.value.trim().toLowerCase();
+            itens.forEach((item) => {
+                const bateBusca = !termo || item.dataset.busca.includes(termo);
+                const bateAba = filtroAtivo === "todas" || Number(item.dataset.naoLidas) > 0;
+                item.hidden = !(bateBusca && bateAba);
+            });
+        }
+
+        busca.addEventListener("input", aplicarFiltros);
+        abas.forEach((aba) => {
+            aba.addEventListener("click", () => {
+                abas.forEach((a) => a.classList.remove("inbox-aba-ativa"));
+                aba.classList.add("inbox-aba-ativa");
+                filtroAtivo = aba.dataset.filtro;
+                aplicarFiltros();
+            });
+        });
+    })();
+
+    {% if ocorrencia_ativa %}
+    const inboxItemAtiva = document.querySelector(".inbox-item-ativa");
+    if (inboxItemAtiva) {
+        inboxItemAtiva.dataset.naoLidas = "0";
+        inboxItemAtiva.querySelector(".inbox-badge").hidden = true;
+    }
+    {% endif %}
+</script>
+{% if ocorrencia_ativa %}
+<script src="{{ url_for('static', filename='js/geolocalizacao.js') }}"></script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+<script>
+    iniciarChat({
+        ocorrenciaId: {{ ocorrencia_ativa.id }},
+        urlHistorico: "{{ url_for('ocorrencia.mensagens', ocorrencia_id=ocorrencia_ativa.id) }}",
+        aoVivo: false,
+        usuarioAtualId: {{ current_user.id }},
+    });
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "app_base.html" %}
+
+{% block title %}{{ "Editar" if hospital else "Novo" }} Hospital - OrbisHealth{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+
+{% block app_content %}
+<div class="admin-page admin-page-largo">
+    <h1>{{ "Editar hospital" if hospital else "Novo hospital" }}</h1>
+
+    <form class="admin-form admin-form-largo" method="POST" id="form-hospital">
+        <fieldset>
+            <legend>Dados do hospital</legend>
+
+            <div class="form-row">
+                <div>
+                    <label for="nome">Nome do hospital</label>
+                    <input type="text" id="nome" name="nome" value="{{ dados.get('nome', '') }}" required>
+                </div>
+                <div>
+                    <label for="capacidade_maxima">Capacidade máxima</label>
+                    <input type="number" id="capacidade_maxima" name="capacidade_maxima" min="0"
+                           value="{{ dados.get('capacidade_maxima', '') }}">
+                </div>
+            </div>
+
+            <label for="endereco">Endereço</label>
+            <div class="endereco-autocomplete">
+                <input type="text" id="endereco" name="endereco" value="{{ dados.get('endereco', '') }}"
+                       autocomplete="off" required>
+                <ul class="endereco-sugestoes-lista" id="endereco-sugestoes" hidden></ul>
+            </div>
+            <p class="campo-hint" id="hospital-mapa-hint">
+                Digite o endereço e escolha uma das opções sugeridas — o pino é
+                posicionado automaticamente. Se o endereço não aparecer nas
+                sugestões, arraste ou clique no mapa abaixo pra marcar manualmente.
+            </p>
+
+            <div id="mapa-hospital" class="mapa-hospital-preview"></div>
+
+            <input type="hidden" id="latitude" name="latitude"
+                   value="{{ hospital.latitude if hospital and hospital.latitude is not none else '' }}">
+            <input type="hidden" id="longitude" name="longitude"
+                   value="{{ hospital.longitude if hospital and hospital.longitude is not none else '' }}">
+
+            <div class="form-row">
+                <div>
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="tem_heliponto" {{ "checked" if dados.get('tem_heliponto') == 'on' }}>
+                        Possui heliponto
+                    </label>
+                </div>
+                <div>
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="tem_garagem" {{ "checked" if dados.get('tem_garagem') == 'on' }}>
+                        Possui garagem
+                    </label>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Usuário responsável</legend>
+
+            <div class="form-row">
+                <div>
+                    <label for="responsavel_nome">Nome do responsável</label>
+                    <input type="text" id="responsavel_nome" name="responsavel_nome"
+                           value="{{ dados.get('responsavel_nome', '') }}" required>
+                </div>
+                <div>
+                    <label for="email">E-mail de login</label>
+                    <input type="email" id="email" name="email" value="{{ dados.get('email', '') }}" required>
+                </div>
+            </div>
+
+            <label for="senha">Senha {{ "(deixe em branco para manter a atual)" if hospital else "" }}</label>
+            <input type="password" id="senha" name="senha" {{ "" if hospital else "required" }}>
+        </fieldset>
+
+        <div class="admin-form-actions">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a class="btn btn-secondary" href="{{ url_for('admin.listar_hospitais') }}">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/mapa_hospital.js') }}"></script>
+<script>
+    iniciarMapaHospital({
+        urlGeocodificar: "{{ url_for('admin.geocodificar') }}",
+        urlSugestoes: "{{ url_for('admin.enderecos_sugestoes') }}",
+        latitudeInicial: {{ hospital.latitude if hospital and hospital.latitude is not none else "null" }},
+        longitudeInicial: {{ hospital.longitude if hospital and hospital.longitude is not none else "null" }},
+    });
+</script>
+{% endblock %}

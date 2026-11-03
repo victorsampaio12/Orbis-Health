@@ -1,0 +1,243 @@
+{% extends "app_base.html" %}
+{% import "_icons.html" as icons %}
+
+{% block title %}Ocorrência #{{ ocorrencia.id }} - OrbisHealth{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+{% endblock %}
+
+{% block app_content %}
+{% set chat_ativo = ocorrencia.status.value == "em_transporte" and not ocorrencia.chat_encerrado_em %}
+{% set chat_disponivel = ocorrencia.hospital and (chat_ativo or ocorrencia.status.value == "finalizada") %}
+<div class="split-pane">
+    <div class="split-pane-list">
+        <div class="admin-page-header">
+            <h1>Ocorrência #{{ ocorrencia.id }}</h1>
+            {% if eh_dono and ocorrencia.status.value == "aberta" %}
+                <a class="btn btn-primary" href="{{ url_for('ocorrencia.hospitais', ocorrencia_id=ocorrencia.id) }}">
+                    Selecionar Hospital
+                </a>
+            {% endif %}
+        </div>
+
+        <div class="ocorrencia-info-card">
+            <div>
+                <span class="info-label">Status</span>
+                <span class="status-badge status-{{ ocorrencia.status.value }}">
+                    {{ {"aberta": "Aberta", "em_transporte": "Em Transporte", "finalizada": "Finalizada"}[ocorrencia.status.value] }}
+                </span>
+            </div>
+            <div>
+                <span class="info-label">Veículo</span>
+                <span>{{ "Ambulância" if ocorrencia.veiculo.value == "ambulancia" else "Helicóptero" }}</span>
+            </div>
+            <div>
+                <span class="info-label">Local</span>
+                <span>{{ ocorrencia.local }}</span>
+            </div>
+            {% if ocorrencia.hospital %}
+            <div>
+                <span class="info-label">Hospital de destino</span>
+                <span>{{ ocorrencia.hospital.nome }}</span>
+            </div>
+            <div>
+                <span class="info-label">Tipo de rota</span>
+                <span>{{ "Linha reta" if ocorrencia.tipo_rota.value == "linha_reta" else "Terrestre" }}</span>
+            </div>
+            {% endif %}
+            {% if ocorrencia.distancia_estimada_km %}
+            <div>
+                <span class="info-label">Distância estimada</span>
+                <span id="distancia-estimada">{{ ocorrencia.distancia_estimada_km }} km</span>
+            </div>
+            <div>
+                <span class="info-label">Tempo estimado</span>
+                <span id="tempo-estimado">{{ ocorrencia.tempo_estimado_min }} min</span>
+            </div>
+            {% endif %}
+            {% if ocorrencia.comentarios %}
+            <div class="ocorrencia-info-full">
+                <span class="info-label">Comentários</span>
+                <span>{{ ocorrencia.comentarios }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if eh_dono and ocorrencia.status.value == "em_transporte" and not ocorrencia.rota_geometria %}
+        <form method="POST" action="{{ url_for('ocorrencia.gerar_rota', ocorrencia_id=ocorrencia.id) }}">
+            <button type="submit" class="btn btn-primary btn-block" id="btn-gerar-rota"
+                    {{ "disabled" if not ocorrencia.latitude_atual }}>
+                Gerar Rota
+            </button>
+        </form>
+        {% if not ocorrencia.latitude_atual %}
+        <p class="campo-hint" id="sem-localizacao-hint">Aguardando localização para liberar a geração de rota...</p>
+        {% endif %}
+        {% endif %}
+
+        {% if not eh_dono and ocorrencia.status.value == "em_transporte" %}
+        <p class="aviso-rastreamento" id="aviso-rastreamento" hidden>
+            Aguardando atualização de localização do socorrista
+        </p>
+        {% endif %}
+
+        {% if eh_dono and ocorrencia.status.value == "em_transporte" %}
+            {% if not ocorrencia.chegada_confirmada_em %}
+                {% if ocorrencia.rota_geometria %}
+                <button type="button" class="btn btn-primary btn-block" id="btn-iniciar-trajeto"
+                        data-url="{{ url_for('ocorrencia.iniciar_trajeto', ocorrencia_id=ocorrencia.id) }}"
+                        {{ "disabled" if trajeto_estado != "nao_iniciado" }}>
+                    {{ {"nao_iniciado": "Iniciar Trajeto", "em_andamento": "Trajeto em andamento...", "concluido": "Trajeto concluído"}[trajeto_estado] }}
+                </button>
+                <p class="trajeto-status" id="trajeto-status" {{ "hidden" if trajeto_estado == "nao_iniciado" }}>
+                    {{ "Trajeto concluído — confirme a chegada quando o botão aparecer." if trajeto_estado == "concluido" else "Trajeto em andamento — acompanhe no mapa." }}
+                </p>
+                {% endif %}
+                {% if trajeto_estado == "nao_iniciado" %}
+                {# Enquanto o trajeto não começou, dá para desistir deste hospital e escolher outro. #}
+                {% set aviso_voltar = "Voltar para a lista de hospitais? O " ~ ocorrencia.hospital.nome
+                    ~ " será avisado de que a emergência não vai mais para lá."
+                    ~ (" As mensagens já trocadas com ele no chat serão apagadas." if ocorrencia.mensagens else "") %}
+                <form method="POST" action="{{ url_for('ocorrencia.trocar_hospital', ocorrencia_id=ocorrencia.id) }}"
+                      id="form-voltar-hospitais"
+                      onsubmit='return confirm({{ aviso_voltar | tojson }});'>
+                    <button type="submit" class="btn btn-secondary btn-block btn-voltar" title="Desfazer a escolha do hospital e voltar para a lista">
+                        {{ icons.icon("chevron-left", 16) }} Voltar
+                    </button>
+                </form>
+                {% endif %}
+                <form method="POST" action="{{ url_for('ocorrencia.marcar_chegada', ocorrencia_id=ocorrencia.id) }}"
+                      id="form-notificar-chegada" hidden>
+                    <button type="submit" class="btn btn-primary btn-block">Notificar chegada</button>
+                </form>
+            {% else %}
+            <form method="POST" action="{{ url_for('ocorrencia.finalizar', ocorrencia_id=ocorrencia.id) }}" class="admin-form finalizar-form">
+                <label for="desfecho">Desfecho do atendimento</label>
+                <textarea id="desfecho" name="desfecho" rows="3" required></textarea>
+                <button type="submit" class="btn btn-primary btn-block">Finalizar ocorrência</button>
+            </form>
+            {% endif %}
+        {% endif %}
+
+        {% if ocorrencia.status.value == "finalizada" %}
+        <a class="btn btn-secondary btn-block" href="{{ url_for('ocorrencia.relatorio', ocorrencia_id=ocorrencia.id) }}">
+            Ver relatório final
+        </a>
+        {% endif %}
+
+        {% if chat_ativo %}
+        <div class="admin-page-header">
+            <h2>Chat com {{ "o hospital" if eh_dono else "o socorrista" }}</h2>
+        </div>
+        <div class="chat-painel" id="chat-painel">
+            <div class="chat-mensagens" id="chat-mensagens"></div>
+            <form class="chat-form" id="chat-form">
+                <input type="text" id="chat-input" placeholder="Digite sua mensagem..." autocomplete="off" required>
+                <button type="submit" class="btn btn-primary">Enviar</button>
+            </form>
+        </div>
+        {% elif chat_disponivel %}
+        <a class="btn btn-secondary btn-block" href="{{ url_for('inbox.conversa', ocorrencia_id=ocorrencia.id) }}">
+            Ver histórico do chat
+        </a>
+        {% endif %}
+
+        <div class="admin-page-header">
+            <h2>Pacientes</h2>
+            {% if eh_dono %}
+                <a class="btn btn-primary" href="{{ url_for('ocorrencia.pacientes', ocorrencia_id=ocorrencia.id) }}">
+                    Gerenciar pacientes
+                </a>
+            {% endif %}
+            {% if pacientes %}
+                <a class="btn btn-secondary" href="{{ url_for('ocorrencia.prontuario', ocorrencia_id=ocorrencia.id) }}">
+                    Ver pré-prontuário
+                </a>
+            {% endif %}
+        </div>
+
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Idade</th>
+                    <th>Prioridade</th>
+                    <th>Diagnóstico</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for paciente in pacientes %}
+                <tr>
+                    <td>{{ paciente.nome }}</td>
+                    <td>{{ paciente.idade or "-" }}</td>
+                    <td>
+                        <span class="priority-badge priority-{{ paciente.prioridade.value }}">
+                            {{ {"critica": "Crítica", "alta": "Alta", "media": "Média"}[paciente.prioridade.value] }}
+                        </span>
+                    </td>
+                    <td>{{ paciente.diagnostico or "-" }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4">Nenhum paciente cadastrado ainda.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="mapa-ocorrencia" class="split-pane-map"></div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{# {% set %} não atravessa block boundaries no Jinja — refeito aqui de
+   propósito, não é redundância acidental. #}
+{% set chat_ativo = ocorrencia.status.value == "em_transporte" and not ocorrencia.chat_encerrado_em %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/geolocalizacao.js') }}"></script>
+<script>
+    var MAPA_OCORRENCIA_DADOS = {{ mapa_dados_json | safe }};
+</script>
+<script src="{{ url_for('static', filename='js/icones_mapa.js') }}"></script>
+<script src="{{ url_for('static', filename='js/mapa_ocorrencia.js') }}"></script>
+{% if eh_dono and not ocorrencia.latitude_atual %}
+<script>
+    iniciarCapturaLocalizacaoOcorrencia("{{ url_for('ocorrencia.salvar_localizacao', ocorrencia_id=ocorrencia.id) }}");
+</script>
+{% endif %}
+
+{% if ocorrencia.status.value == "em_transporte" %}
+<script>
+    // Socket usado pelo rastreamento em tempo real desta página. O chat
+    // agora vive só no Inbox, com sua própria conexão.
+    window.OrbisSocket = io();
+</script>
+{% if eh_dono %}
+<script src="{{ url_for('static', filename='js/rastreamento_socorrista.js') }}"></script>
+<script>
+    iniciarRastreamentoSocorrista({{ ocorrencia.id }});
+</script>
+{% else %}
+<script src="{{ url_for('static', filename='js/rastreamento_hospital.js') }}"></script>
+<script>
+    iniciarRastreamentoHospital({{ ocorrencia.id }});
+</script>
+{% endif %}
+{% endif %}
+
+{% if chat_ativo %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+<script>
+    // Mesmo socket do rastreamento (window.OrbisSocket) — uma conexão só.
+    iniciarChat({
+        ocorrenciaId: {{ ocorrencia.id }},
+        urlHistorico: "{{ url_for('ocorrencia.mensagens', ocorrencia_id=ocorrencia.id) }}",
+        aoVivo: true,
+        usuarioAtualId: {{ current_user.id }},
+    });
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "app_base.html" %}
+
+{% block title %}Perfil - OrbisHealth{% endblock %}
+
+{% block app_content %}
+<div class="admin-page">
+    <div class="perfil-cabecalho">
+        <span class="perfil-avatar">{{ current_user.nome | iniciais }}</span>
+        <div class="perfil-cabecalho-info">
+            <h1>{{ current_user.nome }}</h1>
+            <p>{{ current_user.email }}</p>
+        </div>
+        <span class="status-badge status-em_transporte">{{ {"admin": "Administrador", "socorrista": "Socorrista", "hospital": "Hospital"}[current_user.papel.value] }}</span>
+    </div>
+
+    <div class="perfil-grade">
+        <form class="admin-form" method="POST" action="{{ url_for('pages.perfil') }}">
+            <fieldset>
+                <legend>Dados pessoais</legend>
+
+                <label for="nome">{{ "Nome do responsável" if current_user.papel.value == "hospital" else "Nome" }}</label>
+                <input type="text" id="nome" name="nome" value="{{ dados.get('nome', current_user.nome) }}" required>
+
+                {% if current_user.papel.value == "socorrista" and current_user.socorrista %}
+                <label for="telefone">Telefone</label>
+                <input type="tel" id="telefone" name="telefone" maxlength="30" placeholder="(61) 99999-9999"
+                       value="{{ dados.get('telefone', current_user.socorrista.telefone or '') }}">
+                <p class="campo-hint">Aparece para o hospital de destino, para contato durante a emergência.</p>
+                {% endif %}
+
+                <label for="email">E-mail de login</label>
+                <input type="email" id="email" value="{{ current_user.email }}" disabled>
+                <p class="campo-hint">Para alterar o e-mail, fale com um administrador.</p>
+            </fieldset>
+
+            <div class="admin-form-actions">
+                <button type="submit" class="btn btn-primary">Salvar alterações</button>
+            </div>
+        </form>
+
+        <form class="admin-form" method="POST" action="{{ url_for('pages.alterar_senha') }}">
+            <fieldset>
+                <legend>Alterar senha</legend>
+
+                <label for="senha_atual">Senha atual</label>
+                <input type="password" id="senha_atual" name="senha_atual" autocomplete="current-password" required>
+
+                <label for="nova_senha">Nova senha</label>
+                <input type="password" id="nova_senha" name="nova_senha" autocomplete="new-password" minlength="6" required>
+
+                <label for="confirmacao">Confirmar nova senha</label>
+                <input type="password" id="confirmacao" name="confirmacao" autocomplete="new-password" required>
+                <p class="campo-hint">Mínimo de 6 caracteres.</p>
+            </fieldset>
+
+            <div class="admin-form-actions">
+                <button type="submit" class="btn btn-primary">Alterar senha</button>
+            </div>
+        </form>
+    </div>
+
+    {% if current_user.papel.value == "socorrista" and current_user.socorrista %}
+    <div class="perfil-somente-leitura">
+        <h2>Dados do socorrista</h2>
+        <div class="ocorrencia-info-card">
+            <div><span class="info-label">Matrícula</span><span>{{ current_user.socorrista.matricula }}</span></div>
+            <div><span class="info-label">Status</span>
+                <span class="status-badge {{ 'status-ativo' if current_user.ativo else 'status-inativo' }}">{{ "Ativo" if current_user.ativo else "Inativo" }}</span>
+            </div>
+        </div>
+        <p class="campo-hint">Somente um administrador altera esses dados.</p>
+    </div>
+    {% elif current_user.papel.value == "hospital" and current_user.hospital %}
+    {% set hospital = current_user.hospital %}
+    <div class="perfil-somente-leitura">
+        <h2>Dados do hospital</h2>
+        <div class="ocorrencia-info-card">
+            <div><span class="info-label">Hospital</span><span>{{ hospital.nome }}</span></div>
+            <div><span class="info-label">Endereço</span><span>{{ hospital.endereco }}</span></div>
+            <div><span class="info-label">Capacidade máxima</span><span>{{ hospital.capacidade_maxima or "—" }}</span></div>
+            <div><span class="info-label">Heliponto</span><span>{{ "Sim" if hospital.tem_heliponto else "Não" }}</span></div>
+            <div><span class="info-label">Garagem</span><span>{{ "Sim" if hospital.tem_garagem else "Não" }}</span></div>
+            <div><span class="info-label">Status</span>
+                <span class="status-badge {{ 'status-ativo' if hospital.ativo else 'status-inativo' }}">{{ "Ativo" if hospital.ativo else "Inativo" }}</span>
+            </div>
+        </div>
+        <p class="campo-hint">Somente um administrador altera esses dados.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "app_base.html" %}
+
+{% block title %}Pacientes - OrbisHealth{% endblock %}
+
+{% block app_content %}
+<div class="admin-page">
+    <div class="admin-page-header">
+        <h1>Cadastro de Emergência</h1>
+        <a class="btn btn-primary" href="{{ url_for('ocorrencia.novo_paciente', ocorrencia_id=ocorrencia.id) }}">
+            + Adicionar paciente
+        </a>
+    </div>
+
+    <div class="paciente-cards">
+        {% for paciente in pacientes %}
+        <div class="paciente-card">
+            <div class="paciente-card-header">
+                <h2>{{ paciente.nome }}</h2>
+                <span class="priority-badge priority-{{ paciente.prioridade.value }}">
+                    {{ {"critica": "Crítica", "alta": "Alta", "media": "Média"}[paciente.prioridade.value] }}
+                </span>
+            </div>
+            <p class="paciente-card-info">{{ paciente.motivo_chamado }}</p>
+            <a class="btn btn-primary btn-block"
+               href="{{ url_for('ocorrencia.editar_paciente', ocorrencia_id=ocorrencia.id, paciente_id=paciente.id) }}">
+                Prontuário Médico
+            </a>
+        </div>
+        {% else %}
+        <p>Nenhum paciente cadastrado ainda.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
