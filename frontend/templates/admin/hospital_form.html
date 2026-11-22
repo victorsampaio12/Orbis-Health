@@ -1,16 +1,23 @@
 {% extends "app_base.html" %}
+{% import "_icons.html" as icons %}
 
-{% block title %}{{ "Editar" if hospital else "Novo" }} Hospital - OrbisHealth{% endblock %}
+{% block title %}{{ "Editar" if hospital else "Novo" }} hospital - OrbisHealth{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/maplibre/maplibre-gl.css') }}">
 {% endblock %}
 
 {% block app_content %}
 <div class="admin-page admin-page-largo">
-    <h1>{{ "Editar hospital" if hospital else "Novo hospital" }}</h1>
+    <header class="admin-page-header">
+        <div>
+            <a class="link-voltar" href="{{ url_for('admin.listar_hospitais') }}">{{ icons.icon("chevron-left", 16) }} Voltar à lista</a>
+            <h1>{{ "Editar hospital" if hospital else "Novo hospital" }}</h1>
+        </div>
+    </header>
 
-    <form class="admin-form admin-form-largo" method="POST" id="form-hospital">
+    <form class="admin-form admin-form-largo form-grade" method="POST" id="form-hospital">
         <fieldset>
             <legend>Dados do hospital</legend>
 
@@ -90,6 +97,9 @@
 
 {% block extra_scripts %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='vendor/maplibre/maplibre-gl.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/maplibre/leaflet-maplibre-gl.js') }}"></script>
+<script src="{{ url_for('static', filename='js/icones_mapa.js') }}"></script>
 <script src="{{ url_for('static', filename='js/mapa_hospital.js') }}"></script>
 <script>
     iniciarMapaHospital({

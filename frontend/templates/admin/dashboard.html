@@ -1,137 +1,177 @@
 {% extends "app_base.html" %}
 {% import "_icons.html" as icons %}
+{% import "_visor.html" as visor %}
 
 {% block title %}Dashboard - OrbisHealth{% endblock %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/maplibre/maplibre-gl.css') }}">
+{% endblock %}
+
 {% block app_content %}
-<div class="dash-topo">
-    <div>
-        <h1>Dashboard</h1>
-        <p class="admin-subtitle">Visão geral do sistema em tempo real.</p>
-    </div>
-    <span class="dash-atualizado">
-        {{ icons.icon("clock", 14) }}
-        Atualizado às <span id="dash-hora-atualizacao" data-utc="{{ kpis.atualizado_em }}" data-formato="hora"></span>
-    </span>
-</div>
+{% set viaturas = kpis.mapa.viaturas %}
+<div class="palco">
+    <div id="mapa-operacao" class="palco-mapa dash-mapa-area"></div>
 
-<div class="kpi-grid">
-    <div class="kpi-tile kpi-tile-destaque">
-        <span class="kpi-icone">{{ icons.icon("activity", 22) }}</span>
-        <div class="kpi-corpo">
-            <strong class="kpi-valor" data-kpi="ocorrencias_ativas">{{ kpis.ocorrencias_ativas }}</strong>
-            <span class="kpi-rotulo">Ocorrências ativas agora</span>
-        </div>
-    </div>
+    {# esquerda: o agora — números grandes e quem está em atendimento #}
+    <aside class="painel-flutuante painel-esquerdo dash-painel">
+        <header class="painel-cabeca">
+            <span class="sobre"><span class="ao-vivo"></span> SAMU-DF · tempo real</span>
+            <h1 class="titulo-display">Central de<br>Regulação</h1>
+            <span class="dash-atualizado">
+                Atualizado às <span id="dash-hora-atualizacao" data-utc="{{ kpis.atualizado_em }}" data-formato="hora"></span>
+            </span>
+        </header>
 
-    <div class="kpi-tile">
-        <span class="kpi-icone kpi-icone-bom">{{ icons.icon("check-check", 20) }}</span>
-        <div class="kpi-corpo">
-            <strong class="kpi-valor" data-kpi="finalizadas_hoje">{{ kpis.finalizadas_hoje }}</strong>
-            <span class="kpi-rotulo">Finalizadas hoje</span>
-        </div>
-    </div>
-
-    <div class="kpi-tile">
-        <span class="kpi-icone">{{ icons.icon("clock", 20) }}</span>
-        <div class="kpi-corpo">
-            <strong class="kpi-valor" data-kpi="tempo_medio_atendimento_min" data-sufixo=" min">
-                {{ kpis.tempo_medio_atendimento_min if kpis.tempo_medio_atendimento_min is not none else "—" }}{{ " min" if kpis.tempo_medio_atendimento_min is not none }}
-            </strong>
-            <span class="kpi-rotulo">Tempo médio de atendimento</span>
-        </div>
-    </div>
-
-    <div class="kpi-tile">
-        <span class="kpi-icone">{{ icons.icon("building-2", 20) }}</span>
-        <div class="kpi-corpo">
-            <strong class="kpi-valor"><span data-kpi="hospitais.ativos">{{ kpis.hospitais.ativos }}</span> <small>/ <span data-kpi="hospitais.total">{{ kpis.hospitais.total }}</span></small></strong>
-            <span class="kpi-rotulo">Hospitais ativos</span>
-        </div>
-    </div>
-
-    <div class="kpi-tile">
-        <span class="kpi-icone">{{ icons.icon("siren", 20) }}</span>
-        <div class="kpi-corpo">
-            <strong class="kpi-valor"><span data-kpi="socorristas.ativos">{{ kpis.socorristas.ativos }}</span> <small>/ <span data-kpi="socorristas.total">{{ kpis.socorristas.total }}</span></small></strong>
-            <span class="kpi-rotulo">Socorristas ativos</span>
-        </div>
-    </div>
-
-    <div class="kpi-tile">
-        <span class="kpi-icone">{{ icons.icon("history", 20) }}</span>
-        <div class="kpi-corpo">
-            <strong class="kpi-valor" data-kpi="total_ocorrencias">{{ kpis.total_ocorrencias }}</strong>
-            <span class="kpi-rotulo">Ocorrências no total</span>
-        </div>
-    </div>
-</div>
-
-<div class="dash-secoes">
-    <section class="dash-secao">
-        <h2>Capacidade dos hospitais</h2>
-        {% set cap = kpis.capacidade_hospitais %}
-        {% set cap_total = cap.disponivel + cap.critico + cap.lotado %}
-        {% if cap_total %}
-        <div class="dash-barra-capacidade" id="dash-barra-capacidade">
-            <span class="dash-barra-seg dash-barra-disponivel" style="width: {{ (cap.disponivel / cap_total * 100) | round(1) }}%" data-cap="disponivel"></span>
-            <span class="dash-barra-seg dash-barra-critico" style="width: {{ (cap.critico / cap_total * 100) | round(1) }}%" data-cap="critico"></span>
-            <span class="dash-barra-seg dash-barra-lotado" style="width: {{ (cap.lotado / cap_total * 100) | round(1) }}%" data-cap="lotado"></span>
-        </div>
-        <div class="dash-legenda">
-            <span class="dash-legenda-item"><i class="dash-ponto dash-ponto-disponivel"></i> Disponível <strong data-kpi="capacidade_hospitais.disponivel">{{ cap.disponivel }}</strong></span>
-            <span class="dash-legenda-item"><i class="dash-ponto dash-ponto-critico"></i> Crítico <strong data-kpi="capacidade_hospitais.critico">{{ cap.critico }}</strong></span>
-            <span class="dash-legenda-item"><i class="dash-ponto dash-ponto-lotado"></i> Lotado <strong data-kpi="capacidade_hospitais.lotado">{{ cap.lotado }}</strong></span>
-        </div>
-        {% else %}
-        <p class="placeholder-page">Nenhum hospital ativo cadastrado ainda.</p>
-        {% endif %}
-    </section>
-
-    <section class="dash-secao">
-        <h2>Veículos a caminho agora</h2>
-        <div class="dash-veiculos">
-            <div class="dash-veiculo-tile">
-                {{ icons.icon("ambulance", 24) }}
-                <strong data-kpi="veiculos_ativos.ambulancia">{{ kpis.veiculos_ativos.ambulancia }}</strong>
-                <span>Ambulância</span>
+        <div class="kpi-grid">
+            <div class="kpi-tile kpi-tile-destaque">
+                <strong class="kpi-valor" data-kpi="ocorrencias_ativas">{{ kpis.ocorrencias_ativas }}</strong>
+                <span class="kpi-rotulo">Ocorrências<br>ativas</span>
             </div>
-            <div class="dash-veiculo-tile">
-                {{ icons.icon("helicopter", 24) }}
-                <strong data-kpi="veiculos_ativos.helicoptero">{{ kpis.veiculos_ativos.helicoptero }}</strong>
-                <span>Helicóptero</span>
+            <div class="kpi-tile">
+                <strong class="kpi-valor" data-kpi="finalizadas_hoje">{{ kpis.finalizadas_hoje }}</strong>
+                <span class="kpi-rotulo">Finalizadas<br>hoje</span>
+            </div>
+            <div class="kpi-tile">
+                <strong class="kpi-valor" data-kpi="tempo_medio_atendimento_min" data-formato-kpi="duracao">{{ kpis.tempo_medio_atendimento_min | duracao }}</strong>
+                <span class="kpi-rotulo">Tempo médio<br>de atendimento</span>
+            </div>
+            <div class="kpi-tile">
+                <strong class="kpi-valor"><span data-kpi="hospitais.ativos">{{ kpis.hospitais.ativos }}</span><small>/<span data-kpi="hospitais.total">{{ kpis.hospitais.total }}</span></small></strong>
+                <span class="kpi-rotulo">Hospitais<br>ativos</span>
+            </div>
+            <div class="kpi-tile">
+                <strong class="kpi-valor"><span data-kpi="socorristas.ativos">{{ kpis.socorristas.ativos }}</span><small>/<span data-kpi="socorristas.total">{{ kpis.socorristas.total }}</span></small></strong>
+                <span class="kpi-rotulo">Socorristas<br>ativos</span>
+            </div>
+            <div class="kpi-tile">
+                <strong class="kpi-valor" data-kpi="total_ocorrencias">{{ kpis.total_ocorrencias }}</strong>
+                <span class="kpi-rotulo">Ocorrências<br>no total</span>
             </div>
         </div>
-    </section>
 
-    <section class="dash-secao dash-secao-auditoria">
-        <h2>Últimas ações</h2>
-        {% if kpis.ultimas_acoes %}
-        <ul class="dash-auditoria-lista" id="dash-auditoria-lista">
-            {% for acao in kpis.ultimas_acoes %}
-            <li>
-                <span class="dash-auditoria-texto">
-                    <strong>{{ acao.admin_nome }}</strong> {{ acao.operacao }}
-                    {{ acao.entidade }} <strong>{{ acao.entidade_nome }}</strong>
-                </span>
-                <span class="dash-auditoria-hora" data-utc="{{ acao.criado_em }}" data-formato="datahora"></span>
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p class="placeholder-page">Nenhuma ação registrada ainda.</p>
-        {% endif %}
-    </section>
+        <section class="dash-lista">
+            <header class="dash-lista-topo">
+                <h2>Em atendimento</h2>
+                <div class="abas" role="tablist" data-abas="dash-viaturas">
+                    <button type="button" class="aba ativa" data-filtro="todas">Todas</button>
+                    <button type="button" class="aba" data-filtro="aberta">Abertas</button>
+                    <button type="button" class="aba" data-filtro="em_transporte">Em transporte</button>
+                </div>
+            </header>
+            {# modelos de ícone para itens que entram na lista pela atualização automática #}
+            <span hidden class="viatura-icone viatura-ambulancia">{{ icons.icon("ambulance", 17) }}</span>
+            <span hidden class="viatura-icone viatura-helicoptero">{{ icons.icon("helicopter", 17) }}</span>
+            <ul class="viaturas-lista" id="dash-viaturas">
+                {% for v in viaturas %}
+                <li class="viatura-item" data-id="{{ v.id }}" data-status="{{ v.status }}" tabindex="0">
+                    <span class="viatura-icone viatura-{{ v.veiculo }}">{{ icons.icon("helicopter" if v.veiculo == "helicoptero" else "ambulance", 17) }}</span>
+                    <span class="viatura-info">
+                        <strong>{{ v.codigo }}</strong>
+                        <small>{{ v.local }}</small>
+                    </span>
+                    <span class="viatura-destino">
+                        <span class="status-badge status-{{ v.status }}">{{ "Aberta" if v.status == "aberta" else "Em transporte" }}</span>
+                        <small>{{ v.hospital or "Sem hospital" }}</small>
+                    </span>
+                </li>
+                {% else %}
+                <li class="vazio">Nenhuma ocorrência em atendimento agora.</li>
+                {% endfor %}
+            </ul>
+        </section>
+    </aside>
+
+    {# direita: a rede — capacidade, veículos e o que mudou #}
+    <aside class="painel-flutuante painel-direito">
+        <section class="dash-secao">
+            <h2>Capacidade dos hospitais</h2>
+            {% set cap = kpis.capacidade_hospitais %}
+            {% set cap_total = cap.disponivel + cap.critico + cap.lotado %}
+            {% if cap_total %}
+            <div class="dash-barra-capacidade" id="dash-barra-capacidade">
+                <span class="dash-barra-seg dash-barra-disponivel" style="width: {{ (cap.disponivel / cap_total * 100) | round(1) }}%" data-cap="disponivel"></span>
+                <span class="dash-barra-seg dash-barra-critico" style="width: {{ (cap.critico / cap_total * 100) | round(1) }}%" data-cap="critico"></span>
+                <span class="dash-barra-seg dash-barra-lotado" style="width: {{ (cap.lotado / cap_total * 100) | round(1) }}%" data-cap="lotado"></span>
+            </div>
+            <ul class="dash-legenda">
+                <li class="dash-legenda-item"><i class="dash-ponto dash-ponto-disponivel"></i> Disponível <strong data-kpi="capacidade_hospitais.disponivel">{{ cap.disponivel }}</strong></li>
+                <li class="dash-legenda-item"><i class="dash-ponto dash-ponto-critico"></i> Crítico <strong data-kpi="capacidade_hospitais.critico">{{ cap.critico }}</strong></li>
+                <li class="dash-legenda-item"><i class="dash-ponto dash-ponto-lotado"></i> Lotado <strong data-kpi="capacidade_hospitais.lotado">{{ cap.lotado }}</strong></li>
+            </ul>
+            {% else %}
+            <p class="placeholder-page">Nenhum hospital ativo cadastrado ainda.</p>
+            {% endif %}
+        </section>
+
+        <section class="dash-secao">
+            <h2>Veículos a caminho</h2>
+            <div class="dash-veiculos">
+                <div class="dash-veiculo-tile">
+                    {{ visor.veiculo3d("ambulancia", movimento=true, classe="dash-veiculo-3d", azimute=40, elevacao=14, folga=0.95, uid="dash-a") }}
+                    <strong data-kpi="veiculos_ativos.ambulancia">{{ kpis.veiculos_ativos.ambulancia }}</strong>
+                    <span>Ambulâncias</span>
+                </div>
+                <div class="dash-veiculo-tile">
+                    {{ visor.veiculo3d("helicoptero", movimento=true, classe="dash-veiculo-3d", azimute=40, elevacao=12, folga=0.85, uid="dash-h") }}
+                    <strong data-kpi="veiculos_ativos.helicoptero">{{ kpis.veiculos_ativos.helicoptero }}</strong>
+                    <span>Helicópteros</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="dash-secao dash-secao-auditoria">
+            <h2>Últimas ações</h2>
+            {% if kpis.ultimas_acoes %}
+            <ul class="dash-auditoria-lista" id="dash-auditoria-lista">
+                {% for acao in kpis.ultimas_acoes %}
+                <li>
+                    <span class="dash-auditoria-texto">
+                        <strong>{{ acao.admin_nome }}</strong> {{ acao.operacao }}
+                        {{ acao.entidade }} <strong>{{ acao.entidade_nome }}</strong>
+                    </span>
+                    <span class="dash-auditoria-hora" data-utc="{{ acao.criado_em }}" data-formato="datahora"></span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="placeholder-page">Nenhuma ação registrada ainda.</p>
+            {% endif %}
+        </section>
+    </aside>
+
+    <div class="mapa-legenda-flutuante">
+        <span><i class="leg disponivel"></i>Disponível</span>
+        <span><i class="leg critico"></i>Crítico</span>
+        <span><i class="leg lotado"></i>Lotado</span>
+        <span id="dash-mapa-resumo">{{ viaturas | length }} viaturas · {{ kpis.mapa.hospitais | length }} hospitais</span>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='vendor/maplibre/maplibre-gl.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/maplibre/leaflet-maplibre-gl.js') }}"></script>
+<script src="{{ url_for('static', filename='js/icones_mapa.js') }}"></script>
+<script src="{{ url_for('static', filename='js/mapa_operacao.js') }}"></script>
+{{ visor.script() }}
+<script>
+    window.OrbisMapaOperacao = iniciarMapaOperacao({{ kpis.mapa | tojson }});
+</script>
 <script>
     window.OrbisPrefs.formatarElementosData();
 
     (function () {
         const urlDados = "{{ url_for('admin.dashboard_dados') }}";
         const INTERVALO_MS = 20000;
+
+        function duracao(min) {
+            if (min === null || min === undefined) return "—";
+            const t = Math.round(Number(min));
+            return t < 60 ? `${t} min` : `${Math.floor(t / 60)}h ${String(t % 60).padStart(2, "0")}min`;
+        }
 
         function valorAninhado(objeto, caminho) {
             return caminho.split(".").reduce((atual, chave) => (atual == null ? undefined : atual[chave]), objeto);
@@ -161,6 +201,7 @@
                     document.querySelectorAll("[data-kpi]").forEach((el) => {
                         const valor = valorAninhado(dados, el.dataset.kpi);
                         if (valor === undefined) return;
+                        if (el.dataset.formatoKpi === "duracao") { el.textContent = duracao(valor); return; }
                         el.textContent = (el.dataset.sufixo && valor !== null) ? `${valor}${el.dataset.sufixo}` : (valor ?? "—");
                     });
 
@@ -171,6 +212,8 @@
                             seg.style.width = `${(cap[seg.dataset.cap] / capTotal * 100).toFixed(1)}%`;
                         });
                     }
+
+                    if (dados.mapa && window.OrbisMapaOperacao) window.OrbisMapaOperacao.atualizar(dados.mapa);
 
                     const lista = document.getElementById("dash-auditoria-lista");
                     if (lista && dados.ultimas_acoes) {

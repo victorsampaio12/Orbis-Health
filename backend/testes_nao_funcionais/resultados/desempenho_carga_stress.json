@@ -1,0 +1,458 @@
+{
+  "desempenho": {
+    "anonimo GET /login": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 1.5,
+      "p50_ms": 1.3,
+      "p95_ms": 2.5,
+      "p99_ms": 2.5,
+      "max_ms": 2.5,
+      "status": [
+        200
+      ],
+      "bytes": 3849
+    },
+    "admin GET /admin/": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 12.4,
+      "p50_ms": 12.3,
+      "p95_ms": 13.5,
+      "p99_ms": 16.0,
+      "max_ms": 16.0,
+      "status": [
+        200
+      ],
+      "bytes": 13402
+    },
+    "admin GET /admin/dashboard-dados": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 30.8,
+      "p50_ms": 30.6,
+      "p95_ms": 33.2,
+      "p99_ms": 33.4,
+      "max_ms": 33.4,
+      "status": [
+        200
+      ],
+      "bytes": 1811
+    },
+    "admin GET /admin/hospitais": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 13.5,
+      "p50_ms": 13.6,
+      "p95_ms": 14.7,
+      "p99_ms": 14.8,
+      "max_ms": 14.8,
+      "status": [
+        200
+      ],
+      "bytes": 30805
+    },
+    "admin GET /admin/socorristas": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 12.6,
+      "p50_ms": 12.8,
+      "p95_ms": 13.7,
+      "p99_ms": 13.9,
+      "max_ms": 13.9,
+      "status": [
+        200
+      ],
+      "bytes": 25468
+    },
+    "admin GET /admin/admins": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 4.0,
+      "p50_ms": 3.6,
+      "p95_ms": 5.7,
+      "p99_ms": 5.8,
+      "max_ms": 5.8,
+      "status": [
+        200
+      ],
+      "bytes": 12265
+    },
+    "socorrista GET /ocorrencias/2": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 7.3,
+      "p50_ms": 6.9,
+      "p95_ms": 8.8,
+      "p99_ms": 8.8,
+      "max_ms": 8.8,
+      "status": [
+        200
+      ],
+      "bytes": 12314
+    },
+    "socorrista GET /ocorrencias/2/pacientes": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 6.8,
+      "p50_ms": 6.7,
+      "p95_ms": 8.0,
+      "p99_ms": 10.0,
+      "max_ms": 10.0,
+      "status": [
+        200
+      ],
+      "bytes": 9256
+    },
+    "socorrista GET /ocorrencias/2/prontuario": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 7.3,
+      "p50_ms": 7.2,
+      "p95_ms": 8.4,
+      "p99_ms": 8.8,
+      "max_ms": 8.8,
+      "status": [
+        200
+      ],
+      "bytes": 11209
+    },
+    "socorrista GET /ocorrencias/2/pacientes/novo": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 6.4,
+      "p50_ms": 6.1,
+      "p95_ms": 7.9,
+      "p99_ms": 7.9,
+      "max_ms": 7.9,
+      "status": [
+        200
+      ],
+      "bytes": 15131
+    },
+    "socorrista GET /ocorrencias/2/mensagens": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 4.8,
+      "p50_ms": 4.4,
+      "p95_ms": 6.6,
+      "p99_ms": 6.6,
+      "max_ms": 6.6,
+      "status": [
+        200
+      ],
+      "bytes": 446
+    },
+    "socorrista GET /inbox/": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 10.4,
+      "p50_ms": 10.4,
+      "p95_ms": 11.9,
+      "p99_ms": 12.0,
+      "max_ms": 12.0,
+      "status": [
+        200
+      ],
+      "bytes": 14627
+    },
+    "socorrista GET /perfil": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 5.5,
+      "p50_ms": 5.3,
+      "p95_ms": 6.5,
+      "p99_ms": 6.5,
+      "max_ms": 6.5,
+      "status": [
+        200
+      ],
+      "bytes": 11280
+    },
+    "socorrista_livre GET /ocorrencias/63/hospitais": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 20.6,
+      "p50_ms": 20.3,
+      "p95_ms": 22.6,
+      "p99_ms": 22.9,
+      "max_ms": 22.9,
+      "status": [
+        200
+      ],
+      "bytes": 34624
+    },
+    "socorrista_livre GET /ocorrencias/novo": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 4.4,
+      "p50_ms": 4.1,
+      "p95_ms": 5.7,
+      "p99_ms": 5.7,
+      "max_ms": 5.7,
+      "status": [
+        302
+      ],
+      "bytes": 217
+    },
+    "hospital GET /dashboard": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 23.1,
+      "p50_ms": 22.9,
+      "p95_ms": 25.0,
+      "p99_ms": 25.0,
+      "max_ms": 25.0,
+      "status": [
+        200
+      ],
+      "bytes": 63004
+    },
+    "hospital GET /ocorrencias/2": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 6.1,
+      "p50_ms": 5.8,
+      "p95_ms": 7.3,
+      "p99_ms": 7.3,
+      "max_ms": 7.3,
+      "status": [
+        200
+      ],
+      "bytes": 12359
+    },
+    "hospital GET /ocorrencias/2/prontuario": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 7.0,
+      "p50_ms": 7.0,
+      "p95_ms": 8.5,
+      "p99_ms": 8.5,
+      "max_ms": 8.5,
+      "status": [
+        200
+      ],
+      "bytes": 11410
+    },
+    "hospital GET /ocorrencias/2/relatorio": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 10.7,
+      "p50_ms": 10.8,
+      "p95_ms": 12.1,
+      "p99_ms": 12.1,
+      "max_ms": 12.1,
+      "status": [
+        200
+      ],
+      "bytes": 9879
+    },
+    "hospital GET /emergencias/historico": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 12.1,
+      "p50_ms": 12.0,
+      "p95_ms": 13.6,
+      "p99_ms": 13.7,
+      "max_ms": 13.7,
+      "status": [
+        200
+      ],
+      "bytes": 33242
+    },
+    "hospital GET /emergencias/historico/exportar": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 11.1,
+      "p50_ms": 11.5,
+      "p95_ms": 12.5,
+      "p99_ms": 13.6,
+      "max_ms": 13.6,
+      "status": [
+        200
+      ],
+      "bytes": 2061
+    },
+    "hospital GET /inbox/": {
+      "requisicoes": 30,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 14.2,
+      "p50_ms": 14.1,
+      "p95_ms": 16.0,
+      "p99_ms": 16.5,
+      "max_ms": 16.5,
+      "status": [
+        200
+      ],
+      "bytes": 20785
+    },
+    "anonimo POST /login (bcrypt)": {
+      "requisicoes": 10,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 247.5,
+      "p50_ms": 247.3,
+      "p95_ms": 250.0,
+      "p99_ms": 250.0,
+      "max_ms": 250.0
+    }
+  },
+  "carga": [
+    {
+      "requisicoes": 1551,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 12.7,
+      "p50_ms": 12.2,
+      "p95_ms": 24.8,
+      "p99_ms": 26.3,
+      "max_ms": 63.3,
+      "usuarios": 1,
+      "duracao_s": 20.0,
+      "vazao_req_s": 77.5
+    },
+    {
+      "requisicoes": 2578,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 38.3,
+      "p50_ms": 29.7,
+      "p95_ms": 97.0,
+      "p99_ms": 110.6,
+      "max_ms": 134.6,
+      "usuarios": 5,
+      "duracao_s": 20.0,
+      "vazao_req_s": 128.7
+    },
+    {
+      "requisicoes": 2538,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 77.3,
+      "p50_ms": 64.3,
+      "p95_ms": 189.0,
+      "p99_ms": 228.2,
+      "max_ms": 287.8,
+      "usuarios": 10,
+      "duracao_s": 20.0,
+      "vazao_req_s": 126.7
+    },
+    {
+      "requisicoes": 2300,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 209.3,
+      "p50_ms": 192.8,
+      "p95_ms": 363.8,
+      "p99_ms": 447.2,
+      "max_ms": 1017.8,
+      "usuarios": 25,
+      "duracao_s": 20.2,
+      "vazao_req_s": 114.0
+    },
+    {
+      "requisicoes": 2132,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 442.5,
+      "p50_ms": 418.6,
+      "p95_ms": 634.8,
+      "p99_ms": 989.8,
+      "max_ms": 2327.3,
+      "usuarios": 50,
+      "duracao_s": 20.4,
+      "vazao_req_s": 104.3
+    }
+  ],
+  "stress": {
+    "concorrencia": [
+      {
+        "requisicoes": 1802,
+        "erros": 0,
+        "taxa_erro_pct": 0.0,
+        "media_ms": 974.4,
+        "p50_ms": 871.7,
+        "p95_ms": 1635.5,
+        "p99_ms": 2812.6,
+        "max_ms": 5434.0,
+        "usuarios": 100,
+        "duracao_s": 20.8,
+        "vazao_req_s": 86.7,
+        "servidor_respondendo_depois": true
+      },
+      {
+        "requisicoes": 1460,
+        "erros": 0,
+        "taxa_erro_pct": 0.0,
+        "media_ms": 2105.5,
+        "p50_ms": 1727.4,
+        "p95_ms": 4922.2,
+        "p99_ms": 7814.7,
+        "max_ms": 12613.7,
+        "usuarios": 200,
+        "duracao_s": 21.5,
+        "vazao_req_s": 67.9,
+        "servidor_respondendo_depois": true
+      }
+    ],
+    "rajada_50_logins": {
+      "requisicoes": 50,
+      "erros": 0,
+      "taxa_erro_pct": 0.0,
+      "media_ms": 1413.6,
+      "p50_ms": 1376.0,
+      "p95_ms": 2248.3,
+      "p99_ms": 2368.4,
+      "max_ms": 2368.4
+    },
+    "envio_61MB": {
+      "status": 302,
+      "tempo_ms": 54,
+      "servidor_respondendo_depois": true
+    },
+    "bomba_12000px": {
+      "arquivo_kb": 137,
+      "status": 200,
+      "recusada": true,
+      "tempo_ms": 18,
+      "servidor_respondendo_depois": true
+    },
+    "bomba_20000px": {
+      "arquivo_kb": 379,
+      "status": 200,
+      "recusada": true,
+      "tempo_ms": 12,
+      "servidor_respondendo_depois": true
+    },
+    "websocket_150": {
+      "conectados": 150,
+      "falhas": 0,
+      "tempo_total_ms": 889,
+      "servidor_respondendo_com_conexoes_abertas": true
+    },
+    "servidor_respondendo_no_fim": true
+  },
+  "servidor": "Werkzeug + Flask-SocketIO (threading), 1 processo"
+}

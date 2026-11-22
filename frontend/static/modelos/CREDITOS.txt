@@ -1,0 +1,26 @@
+Modelos 3D usados no OrbisHealth
+================================
+
+helicoptero.glb
+  "Elicopter SMURD Romania" — solid3DDD (https://sketchfab.com/solid3DDD)
+  Fonte: https://sketchfab.com/3d-models/d505c4eba9ef46c1b8725d1977bd0263
+  Licença: Creative Commons Atribuição 4.0 (CC-BY 4.0) — https://creativecommons.org/licenses/by/4.0/
+  Alterações: letreiros trocados para o SAMU ("SAMU", telefone 192), textos, bandeiras e
+  brasões romenos removidos; malha simplificada e texturas comprimidas (WebP 1024 px).
+
+ambulancia.glb
+  "Mercedes Vito Ambulanta" — solid3DDD (https://sketchfab.com/solid3DDD)
+  Fonte: https://sketchfab.com/3d-models/c72f3a8962d847949e607e12fb18600f
+  Licença: Creative Commons Atribuição 4.0 (CC-BY 4.0) — https://creativecommons.org/licenses/by/4.0/
+  Alterações: letreiros trocados para o SAMU ("AMBULÂNCIA", "SAMU · URGÊNCIA", telefone 192),
+  textos romenos removidos; malha simplificada e texturas comprimidas (WebP 1024 px).
+
+corpo.glb
+  "High polygon male basemesh" (malebody_BETA1) — Julius Krischan Makowka
+  Fonte: https://opengameart.org/content/male-body-subd-mesh
+  Licença: Creative Commons Atribuição-CompartilhaIgual 3.0 (CC-BY-SA 3.0) — https://creativecommons.org/licenses/by-sa/3.0/
+  Alterações: escala normalizada e malha dividida em regiões anatômicas (cabeça, pescoço,
+  tórax, abdome, pelve, coluna, braços e pernas) para marcar lesões. Este arquivo derivado
+  é distribuído sob a mesma licença CC-BY-SA 3.0.
+
+Biblioteca three.js (static/vendor/three) — licença MIT (ver static/vendor/three/LICENSE).

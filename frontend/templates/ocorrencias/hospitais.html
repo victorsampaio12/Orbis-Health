@@ -1,32 +1,58 @@
 {% extends "app_base.html" %}
+{% import "_icons.html" as icons %}
+{% import "_jornada.html" as jornada %}
 
-{% block title %}Selecionar Hospital - OrbisHealth{% endblock %}
+{% block title %}Selecionar hospital - OrbisHealth{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/maplibre/maplibre-gl.css') }}">
 {% endblock %}
 
+{% block cel_voltar %}{{ url_for('ocorrencia.ver', ocorrencia_id=ocorrencia.id) }}{% endblock %}
+{% block cel_titulo %}Hospital de destino{% endblock %}
+{% block cel_sub %}{{ "Somente hospitais com heliponto" if ocorrencia.veiculo.value == "helicoptero" else "Hospitais com garagem para ambulância" }}{% endblock %}
+
 {% block app_content %}
-<div class="split-pane">
-    <div class="split-pane-list">
-        <h1>Selecionar Hospital de Destino</h1>
-        <p class="admin-subtitle">
-            Veículo: {{ "Ambulância" if ocorrencia.veiculo.value == "ambulancia" else "Helicóptero" }} —
-            mostrando só hospitais compatíveis e ativos.
-        </p>
+<div class="split-pane palco">
+    <div id="mapa-hospitais" class="split-pane-map palco-mapa"></div>
+    <div class="split-pane-list painel-flutuante painel-esquerdo">
+        <header class="admin-page-header">
+            <div>
+                <span class="sobre">{{ ocorrencia.id | codigo_emg }} · {{ "Ambulância" if ocorrencia.veiculo.value == "ambulancia" else "Helicóptero" }}</span>
+                <h1 class="titulo-display">Selecionar Hospital de Destino</h1>
+                <p class="admin-subtitle">
+                    Veículo: {{ "Ambulância" if ocorrencia.veiculo.value == "ambulancia" else "Helicóptero" }} —
+                    mostrando só hospitais compatíveis e ativos.
+                </p>
+            </div>
+        </header>
+
+        {{ jornada.jornada(ocorrencia) }}
+
+        {% if hospitais %}
+        <p class="cel-so cel-contagem">{{ hospitais | length }} {{ "hospital compatível" if hospitais | length == 1 else "hospitais compatíveis" }}, ordenados por disponibilidade e distância</p>
+        {% endif %}
 
         {% for hospital, status, ocorrencias_ativas in hospitais %}
-        <div class="hospital-card">
+        {% set livres = ([hospital.capacidade_maxima - ocorrencias_ativas, 0] | max) if hospital.capacidade_maxima else none %}
+        {% set ocupacao = ((ocorrencias_ativas / hospital.capacidade_maxima * 100) if hospital.capacidade_maxima else 0) %}
+        <article class="hospital-card hospital-card-{{ status }}">
             <div class="hospital-card-header">
+                <span class="hospital-card-icone">{{ icons.icon("building-2", 18) }}</span>
                 <h2>{{ hospital.nome }}</h2>
                 <span class="status-badge status-{{ status }}">
                     {{ {"disponivel": "Disponível", "critico": "Crítico", "lotado": "Lotado"}[status] }}
                 </span>
             </div>
             <p class="hospital-card-info">{{ hospital.endereco }}</p>
+            {% if hospital.capacidade_maxima %}
+            <div class="ocupacao" title="Ocupação dos leitos de emergência">
+                <span class="ocupacao-barra" style="width: {{ [ocupacao, 100] | min | round(1) }}%"></span>
+            </div>
+            {% endif %}
             <p class="hospital-card-info hospital-card-leitos">
                 {% if hospital.capacidade_maxima %}
-                    {% set livres = [hospital.capacidade_maxima - ocorrencias_ativas, 0] | max %}
                     <strong>{{ ocorrencias_ativas }} de {{ hospital.capacidade_maxima }} leitos de emergência ocupados</strong>
                     · {{ livres }} {{ "leito livre" if livres == 1 else "leitos livres" }}
                 {% else %}
@@ -36,17 +62,19 @@
             </p>
             <form method="POST" action="{{ url_for('ocorrencia.selecionar_hospital', ocorrencia_id=ocorrencia.id) }}">
                 <input type="hidden" name="hospital_id" value="{{ hospital.id }}">
-                <button type="submit" class="btn btn-primary btn-block" {{ "disabled" if status == "lotado" }}>
-                    Selecionar
+                <button type="submit" class="btn btn-secondary btn-block btn-escolher" {{ "disabled" if status == "lotado" }}>
+                    {{ "Lotado — indisponível" if status == "lotado" else "Selecionar" }}{% if status != "lotado" %} {{ icons.icon("arrow-right", 16) }}{% endif %}
                 </button>
             </form>
-        </div>
+        </article>
         {% else %}
-        <p>Nenhum hospital compatível encontrado para este veículo.</p>
+        <div class="estado-vazio">
+            <strong>Nenhum hospital compatível</strong>
+            <p>Nenhum hospital ativo atende este veículo agora.</p>
+        </div>
         {% endfor %}
     </div>
 
-    <div id="mapa-hospitais" class="split-pane-map"></div>
 </div>
 {% endblock %}
 
@@ -55,5 +83,8 @@
 <script>
     var MAPA_HOSPITAIS_DADOS = {{ mapa_dados_json | safe }};
 </script>
+<script src="{{ url_for('static', filename='vendor/maplibre/maplibre-gl.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/maplibre/leaflet-maplibre-gl.js') }}"></script>
+<script src="{{ url_for('static', filename='js/icones_mapa.js') }}"></script>
 <script src="{{ url_for('static', filename='js/mapa_hospitais.js') }}"></script>
 {% endblock %}

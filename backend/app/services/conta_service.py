@@ -35,6 +35,8 @@ def atualizar_perfil(usuario, dados):
     nome = (dados.get("nome") or "").strip()
     if not nome:
         raise ContaError("O campo nome é obrigatório.", campo="nome")
+    if len(nome) > 150:
+        raise ContaError("O campo nome aceita no máximo 150 caracteres.", campo="nome")
 
     usuario.nome = nome
 

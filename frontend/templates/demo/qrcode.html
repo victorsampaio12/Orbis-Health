@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% import "_marca.html" as marca %}
+
+{% block title %}QR code da demonstração - OrbisHealth{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}">{% endblock %}
+
+{% block content %}
+<main class="demo-qr">
+    <div class="demo-qr-cartao">
+        <header class="demo-topo">
+            <span class="demo-logo">{{ marca.marca(22) }}</span>
+            <span class="demo-nome">Orbis<em>Health</em></span>
+        </header>
+        <h1>Aponte a câmera do celular</h1>
+        <p>e seja o socorrista de uma emergência simulada</p>
+        <div class="demo-qr-codigo" role="img" aria-label="QR code para {{ endereco }}">{{ svg | safe }}</div>
+        <code class="demo-qr-endereco">{{ endereco }}</code>
+    </div>
+    <a class="demo-qr-voltar" href="{{ url_for('auth.dashboard') }}">Voltar ao painel</a>
+</main>
+{% endblock %}

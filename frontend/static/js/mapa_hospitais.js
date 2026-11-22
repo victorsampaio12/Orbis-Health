@@ -10,12 +10,10 @@
     const cores = { disponivel: "#2e7d32", critico: "#a15c00", lotado: "#c62828" };
 
     const centro = dados.posicao_socorrista || CENTRO_PADRAO;
-    const mapa = L.map("mapa-hospitais").setView(centro, 12);
+    const mapa = L.map("mapa-hospitais", { zoomControl: false }).setView(centro, 12);
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; colaboradores do OpenStreetMap",
-        maxZoom: 19,
-    }).addTo(mapa);
+    window.OrbisIcones.camadaBase().addTo(mapa);
+    L.control.zoom({ position: "bottomright" }).addTo(mapa);
 
     const pontos = [];
 
@@ -33,7 +31,7 @@
     }
 
     if (dados.posicao_socorrista) {
-        L.marker(dados.posicao_socorrista).addTo(mapa).bindPopup("Local da ocorrência");
+        L.marker(dados.posicao_socorrista, { title: "Local da ocorrência" }).addTo(mapa).bindPopup("Local da ocorrência");
         pontos.push(dados.posicao_socorrista);
     }
 
@@ -51,6 +49,6 @@
     });
 
     if (pontos.length > 1) {
-        mapa.fitBounds(pontos, { padding: [40, 40] });
+        mapa.fitBounds(pontos, (window.innerWidth > 1100 ? { paddingTopLeft: [500, 80], paddingBottomRight: [60, 60] } : { padding: [40, 40] }));
     }
 })();

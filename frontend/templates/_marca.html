@@ -1,0 +1,9 @@
+{# Marca OrbisHealth: órbita aberta + "satélite" + cruz médica (mesmo desenho do app). #}
+{% macro marca(tamanho=26, cor="#ffffff") -%}
+<svg width="{{ tamanho }}" height="{{ tamanho }}" viewBox="0 0 100 100" aria-hidden="true">
+    <path d="M 83.48 44.10 A 34 34 0 1 1 61.63 18.05" stroke="{{ cor }}" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <circle cx="76.05" cy="28.15" r="5.5" fill="{{ cor }}"/>
+    <rect x="35" y="45" width="30" height="10" rx="3" fill="{{ cor }}"/>
+    <rect x="45" y="35" width="10" height="30" rx="3" fill="{{ cor }}"/>
+</svg>
+{%- endmacro %}

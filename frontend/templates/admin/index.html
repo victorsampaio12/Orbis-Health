@@ -5,14 +5,16 @@
 
 {% block app_content %}
 <div class="cadastro-hub">
-    <div class="cadastro-hub-topo">
-        <h1>Cadastro</h1>
-        <p class="admin-subtitle">Gerencie os hospitais, socorristas e administradores do sistema.</p>
-    </div>
+    <header class="admin-page-header">
+        <div>
+            <h1>Cadastro</h1>
+            <p class="admin-subtitle">Gerencie os hospitais, socorristas e administradores do sistema.</p>
+        </div>
+    </header>
 
     <div class="cadastro-hub-grade">
         <a class="cadastro-card cadastro-card-hospital" href="{{ url_for('admin.listar_hospitais') }}">
-            <span class="cadastro-card-icone">{{ icons.icon("building-2", 32) }}</span>
+            <span class="cadastro-card-icone">{{ icons.icon("building-2", 20) }}</span>
             <h2>Hospitais</h2>
             <p>Cadastrar, editar e desativar hospitais de destino.</p>
             <div class="cadastro-card-numeros">
@@ -23,7 +25,7 @@
         </a>
 
         <a class="cadastro-card cadastro-card-socorrista" href="{{ url_for('admin.listar_socorristas') }}">
-            <span class="cadastro-card-icone">{{ icons.icon("siren", 32) }}</span>
+            <span class="cadastro-card-icone">{{ icons.icon("siren", 20) }}</span>
             <h2>Socorristas</h2>
             <p>Cadastrar, editar e desativar socorristas.</p>
             <div class="cadastro-card-numeros">
@@ -34,7 +36,7 @@
         </a>
 
         <a class="cadastro-card cadastro-card-admin" href="{{ url_for('admin.listar_admins') }}">
-            <span class="cadastro-card-icone">{{ icons.icon("shield-check", 32) }}</span>
+            <span class="cadastro-card-icone">{{ icons.icon("shield-check", 20) }}</span>
             <h2>Administradores</h2>
             <p>Cadastrar, editar, desativar e excluir administradores.</p>
             <div class="cadastro-card-numeros">

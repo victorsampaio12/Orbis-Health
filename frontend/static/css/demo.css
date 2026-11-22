@@ -1,0 +1,59 @@
+/* Modo demonstração (entrada pelo QR code e página do QR code).
+   Mesmas cores, raios e tipografia do app mobile (mobile/src/theme.ts). */
+.demo, .demo-qr {
+    --d-marca: #8A2432; --d-marca-escura: #6B1A26; --d-marca-suave: #F6EEF0;
+    --d-texto: #0F172A; --d-suave: #475569; --d-fraco: #94A3B8;
+    --d-borda: #E2E8F0; --d-fundo: #F5F6F8; --d-sup: #FFFFFF;
+    font-family: "Inter", system-ui, sans-serif; color: var(--d-texto);
+}
+body:has(.demo), body:has(.demo-qr) { background: #F5F6F8; }
+
+.demo {
+    max-width: 480px; min-height: 100vh; min-height: 100dvh; margin: 0 auto;
+    display: flex; flex-direction: column; gap: 20px;
+    padding: max(16px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
+}
+.demo-topo { display: flex; align-items: center; gap: 8px; }
+.demo-logo { display: inline-flex; width: 34px; height: 34px; align-items: center; justify-content: center; border-radius: 10px; background: var(--d-marca); color: #fff; }
+.demo-nome { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; }
+.demo-nome em { font-style: normal; color: var(--d-marca); }
+.demo-selo { margin-left: auto; padding: 4px 10px; border-radius: 999px; background: var(--d-marca-suave); color: var(--d-marca); font-size: 12px; font-weight: 600; }
+
+.demo-capa { padding: 22px 20px; border-radius: 22px; background: linear-gradient(150deg, #8A2432, #5a1621); color: #fff; box-shadow: 0 14px 30px -16px rgba(138, 36, 50, 0.6); }
+.demo-sobre { margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.75; }
+.demo-capa h1 { margin: 0; color: #fff; font-family: "Inter", sans-serif; font-size: 26px; font-weight: 700; line-height: 1.15; letter-spacing: -0.03em; }
+.demo-texto { margin: 12px 0 0; font-size: 15px; line-height: 1.5; opacity: 0.88; }
+
+.demo-passos { list-style: none; margin: 0; padding: 6px; border: 1px solid var(--d-borda); border-radius: 16px; background: var(--d-sup); }
+.demo-passos li { display: flex; gap: 12px; padding: 12px 10px; }
+.demo-passos li + li { border-top: 1px solid var(--d-borda); }
+.demo-passos li > span { flex: 0 0 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--d-marca-suave); color: var(--d-marca); font-size: 13px; font-weight: 700; }
+.demo-passos strong { display: block; font-size: 15px; font-weight: 600; }
+.demo-passos small { display: block; margin-top: 2px; font-size: 13.5px; line-height: 1.45; color: var(--d-suave); }
+
+.demo-acao { margin-top: auto; display: flex; flex-direction: column; gap: 12px; }
+.demo-botao {
+    display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 54px;
+    border: 0; border-radius: 16px; background: var(--d-marca); color: #fff;
+    font: 600 16.5px/1 "Inter", sans-serif; cursor: pointer;
+    box-shadow: 0 10px 22px -12px rgba(138, 36, 50, 0.7); transition: background 0.15s, transform 0.15s;
+}
+.demo-botao:hover { background: var(--d-marca-escura); }
+.demo-botao:active { transform: scale(0.98); }
+.demo-aviso { display: flex; gap: 8px; margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--d-suave); }
+.demo-aviso svg { flex-shrink: 0; margin-top: 2px; color: #047857; }
+.demo-rodape { margin: 0; text-align: center; font-size: 13.5px; color: var(--d-suave); }
+.demo-rodape a { color: var(--d-marca); font-weight: 600; }
+
+/* página para projetar */
+.demo-qr { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; }
+.demo-qr-cartao { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 32px 40px 28px; border-radius: 28px; background: var(--d-sup); border: 1px solid var(--d-borda); box-shadow: 0 30px 60px -30px rgba(15, 23, 42, 0.35); text-align: center; }
+.demo-qr-cartao h1 { margin: 18px 0 0; font-family: "Inter", sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -0.03em; }
+.demo-qr-cartao p { margin: 0; font-size: 17px; color: var(--d-suave); }
+.demo-qr-codigo { margin: 22px 0 10px; }
+.demo-qr-codigo svg { display: block; width: min(56vh, 80vw); height: auto; }
+.demo-qr-endereco { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 15px; color: var(--d-suave); word-break: break-all; }
+.demo-qr-voltar { font-size: 14px; color: var(--d-suave); }
+
+/* alvos de toque confortáveis no celular */
+.demo-rodape a, .demo-qr-voltar { display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; }

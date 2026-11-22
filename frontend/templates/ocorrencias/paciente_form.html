@@ -1,30 +1,64 @@
 {% extends "app_base.html" %}
 {% import "_icons.html" as icons %}
+{% import "_jornada.html" as jornada %}
+{% import "_visor.html" as visor %}
 
-{% block title %}{{ "Editar" if paciente else "Novo" }} Prontuário - OrbisHealth{% endblock %}
+{% block title %}{{ "Editar" if paciente else "Novo" }} prontuário - OrbisHealth{% endblock %}
+
+{% block cel_voltar %}{{ url_for('ocorrencia.ver', ocorrencia_id=ocorrencia.id) }}{% endblock %}
+{% block cel_titulo %}{{ "Editar prontuário" if paciente else "Novo prontuário" }}{% endblock %}
+{% block cel_sub %}Pré-prontuário de atendimento{% endblock %}
 
 {% block app_content %}
-<div class="admin-page admin-page-largo">
-    <h1>Cadastro de Emergência</h1>
+<div class="admin-page admin-page-cheia">
+    <header class="admin-page-header">
+        <div>
+            <span class="sobre"><span class="mono">{{ ocorrencia.id | codigo_emg }}</span> · {{ "Editar paciente" if paciente else "Novo paciente" }}</span>
+            <h1>Pré-prontuário do paciente</h1>
+            <p class="admin-subtitle">Só o nome e o motivo do chamado são obrigatórios. Complete o resto quando puder.</p>
+        </div>
+    </header>
 
-    <form class="admin-form admin-form-largo" method="POST" enctype="multipart/form-data">
-        <fieldset>
-            <legend>Pré-Prontuário de Atendimento</legend>
+    <form class="admin-form admin-form-largo form-paciente" method="POST" enctype="multipart/form-data">
+        {% set sel_regioes = dados.getlist('regioes_lesao') if dados.getlist is defined else (dados.get('regioes_lesao') or '').split(',') %}
+        {# celular: prioridade prevista enquanto digita (mesma regra do servidor, RN-010; quem decide é o servidor) #}
+        <div class="cel-so fp-faixa" id="fp-faixa" data-nivel="media" aria-live="polite">
+            <span class="fp-faixa-rotulo">Prioridade calculada</span>
+            <strong class="fp-faixa-titulo">Estável</strong>
+            <span class="fp-faixa-texto">Nenhum sinal de gravidade informado.</span>
+        </div>
+
+        <fieldset class="fp-corpo">
+            <legend>Onde está a lesão</legend>
+            <p class="campo-hint">Toque nas regiões do corpo (arraste para girar). O hospital vê essas regiões destacadas no pré-prontuário.</p>
+            {{ visor.corpo3d(sel_regioes | select('in', REGIOES_LESAO) | list, editavel=true) }}
+            <div class="regioes-chips" role="group" aria-label="Regiões com lesão">
+                {% for codigo, rotulo in REGIOES_LESAO.items() %}
+                <label class="chip-regiao">
+                    <input type="checkbox" name="regioes_lesao" value="{{ codigo }}" {{ "checked" if codigo in sel_regioes }}>
+                    <span>{{ rotulo }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </fieldset>
+
+        <fieldset class="fp-registro">
+            <legend>Registro</legend>
 
             <div class="form-row">
                 <div>
-                    <label>Data/Hora</label>
-                    <input type="text" {% if paciente %}data-utc="{{ paciente.criado_em.isoformat() }}Z" data-formato="datahora"{% else %}value="Registrado ao salvar"{% endif %} disabled>
+                    <label for="registro-data-hora">Data/Hora</label>
+                    <input type="text" id="registro-data-hora" {% if paciente %}data-utc="{{ paciente.criado_em.isoformat() }}Z" data-formato="datahora"{% else %}value="Registrado ao salvar"{% endif %} disabled>
                 </div>
                 <div>
-                    <label>Profissional</label>
-                    <input type="text" value="{{ ocorrencia.socorrista.usuario.nome }}" disabled>
+                    <label for="registro-profissional">Profissional</label>
+                    <input type="text" id="registro-profissional" value="{{ ocorrencia.socorrista.usuario.nome }}" disabled>
                 </div>
             </div>
         </fieldset>
 
-        <fieldset>
-            <legend>Dados do Paciente</legend>
+        <fieldset class="fp-dados">
+            <legend>Identificação</legend>
 
             <label for="nome">Nome completo</label>
             <input type="text" id="nome" name="nome" value="{{ dados.get('nome', '') }}" required>
@@ -53,24 +87,24 @@
             </div>
         </fieldset>
 
-        <fieldset>
-            <legend>Causa Socorro</legend>
+        <fieldset class="fp-causa">
+            <legend>Causa do socorro</legend>
 
             <label for="motivo_chamado">Motivo do chamado</label>
             <textarea id="motivo_chamado" name="motivo_chamado" rows="2" required>{{ dados.get('motivo_chamado', '') }}</textarea>
         </fieldset>
 
-        <fieldset>
-            <legend>Sinais Vitais</legend>
+        <fieldset class="fp-vitais">
+            <legend>Sinais vitais</legend>
 
             <div class="form-row">
                 <div>
-                    <label for="pressao_arterial">Pressão Arterial</label>
+                    <label for="pressao_arterial">Pressão arterial (mmHg)</label>
                     <input type="text" id="pressao_arterial" name="pressao_arterial" placeholder="ex: 120/80"
                            value="{{ dados.get('pressao_arterial', '') }}">
                 </div>
                 <div>
-                    <label for="frequencia_cardiaca">Frequência Cardíaca (bpm)</label>
+                    <label for="frequencia_cardiaca">Frequência cardíaca (bpm)</label>
                     <input type="number" id="frequencia_cardiaca" name="frequencia_cardiaca"
                            value="{{ dados.get('frequencia_cardiaca', '') }}">
                 </div>
@@ -78,12 +112,12 @@
 
             <div class="form-row">
                 <div>
-                    <label for="frequencia_respiratoria">Frequência Respiratória (rpm)</label>
+                    <label for="frequencia_respiratoria">Frequência respiratória (irpm)</label>
                     <input type="number" id="frequencia_respiratoria" name="frequencia_respiratoria"
                            value="{{ dados.get('frequencia_respiratoria', '') }}">
                 </div>
                 <div>
-                    <label for="saturacao_o2">Saturação de O2 (%)</label>
+                    <label for="saturacao_o2">Saturação de O₂ (%)</label>
                     <input type="number" id="saturacao_o2" name="saturacao_o2"
                            value="{{ dados.get('saturacao_o2', '') }}">
                 </div>
@@ -96,13 +130,13 @@
                            value="{{ dados.get('temperatura', '') }}">
                 </div>
                 <div>
-                    <label for="glasgow">Escala de Glasgow</label>
+                    <label for="glasgow">Escala de Glasgow (3–15)</label>
                     <input type="number" id="glasgow" name="glasgow" min="3" max="15"
                            value="{{ dados.get('glasgow', '') }}">
                 </div>
             </div>
 
-            <label for="nivel_consciencia">Nível de Consciência</label>
+            <label for="nivel_consciencia">Nível de consciência</label>
             <input type="text" id="nivel_consciencia" name="nivel_consciencia"
                    value="{{ dados.get('nivel_consciencia', '') }}">
 
@@ -110,8 +144,8 @@
             <textarea id="diagnostico" name="diagnostico" rows="2">{{ dados.get('diagnostico', '') }}</textarea>
         </fieldset>
 
-        <fieldset>
-            <legend>Evolução no Transporte</legend>
+        <fieldset class="fp-evolucao">
+            <legend>Evolução no transporte</legend>
 
             <div class="checkbox-grade">
             <label class="checkbox-label">
@@ -136,7 +170,9 @@
             <textarea id="observacao" name="observacao" rows="2">{{ dados.get('observacao', '') }}</textarea>
         </fieldset>
 
-        <fieldset>
+        {# modo demonstração: visitante não envia fotos (link público) #}
+        {% if not eh_visitante(current_user) %}
+        <fieldset class="fp-anexos">
             <legend>Anexos (fotos)</legend>
             <p class="campo-hint">
                 Fotos da cena, de ferimentos, de exames ou de documentos do paciente. Ficam visíveis só
@@ -168,6 +204,7 @@
                    accept="image/jpeg,image/png,image/webp" multiple>
             <div class="anexos-grade" id="anexos-previa" hidden></div>
         </fieldset>
+        {% endif %}
 
         <div class="admin-form-actions">
             <button type="submit" class="btn btn-primary">{{ "Salvar" if paciente else "Cadastrar" }}</button>
@@ -178,5 +215,37 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script>
+    // Faixa de prioridade do celular (igual ao app): só mostra, o servidor decide.
+    (function () {
+        const faixa = document.getElementById("fp-faixa");
+        const form = faixa && faixa.closest("form");
+        if (!form) return;
+        const TEXTO = {
+            critica: ["Crítica", "Parada, Glasgow abaixo de 8 ou saturação abaixo de 90%."],
+            alta: ["Alta", "Agravamento registrado."],
+            media: ["Estável", "Nenhum sinal de gravidade informado."],
+        };
+        const num = (nome) => {
+            const el = form.elements[nome];
+            const v = el && el.value.trim().replace(",", ".");
+            return v && !isNaN(Number(v)) ? Number(v) : null;
+        };
+        const marcado = (nome) => !!(form.elements[nome] && form.elements[nome].checked);
+        function atualizar() {
+            const g = num("glasgow");
+            const sat = num("saturacao_o2");
+            const nivel = marcado("parada_cardiorrespiratoria") || (g !== null && g < 8) || (sat !== null && sat < 90)
+                ? "critica" : marcado("agravamento_registrado") ? "alta" : "media";
+            faixa.dataset.nivel = nivel;
+            faixa.querySelector(".fp-faixa-titulo").textContent = TEXTO[nivel][0];
+            faixa.querySelector(".fp-faixa-texto").textContent = TEXTO[nivel][1];
+        }
+        form.addEventListener("input", atualizar);
+        form.addEventListener("change", atualizar);
+        atualizar();
+    })();
+</script>
 <script src="{{ url_for('static', filename='js/anexos.js') }}"></script>
+{{ visor.script() }}
 {% endblock %}

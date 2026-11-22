@@ -54,12 +54,46 @@ def _tempo_medio_atendimento_min(limite=100):
     return round(sum(duracoes_min) / len(duracoes_min), 1)
 
 
-def _capacidade_hospitais():
+def _hospitais_com_status():
+    return [
+        (hospital, ocorrencia_service.status_capacidade(hospital)[0])
+        for hospital in Hospital.query.filter_by(ativo=True).order_by(Hospital.id).all()
+    ]
+
+
+def _capacidade_hospitais(hospitais_status):
     contagem = {"disponivel": 0, "critico": 0, "lotado": 0}
-    for hospital in Hospital.query.filter_by(ativo=True).all():
-        status, _ = ocorrencia_service.status_capacidade(hospital)
+    for _, status in hospitais_status:
         contagem[status] += 1
     return contagem
+
+
+def _mapa_operacao(hospitais_status):
+    """Hospitais ativos e viaturas em atendimento, para o mapa do dashboard."""
+    hospitais = [
+        {"id": h.id, "nome": h.nome, "lat": h.latitude, "lng": h.longitude, "status": status}
+        for h, status in hospitais_status
+        if h.latitude is not None and h.longitude is not None
+    ]
+    viaturas = []
+    for o in Ocorrencia.query.filter(Ocorrencia.status.in_(ATIVAS)).order_by(Ocorrencia.id).all():
+        lat, lng = o.latitude_atual, o.longitude_atual
+        if lat is None or lng is None:
+            continue
+        viaturas.append({
+            "id": o.id,
+            "codigo": f"EMG-{o.id:04d}",
+            "veiculo": o.veiculo.value,
+            "status": o.status.value,
+            "lat": lat,
+            "lng": lng,
+            "destino": (
+                [o.destino_latitude, o.destino_longitude] if o.destino_latitude is not None else None
+            ),
+            "hospital": o.hospital.nome if o.hospital else None,
+            "local": o.local,
+        })
+    return {"hospitais": hospitais, "viaturas": viaturas}
 
 
 def _nome_da_entidade(tipo, entidade_id):
@@ -103,12 +137,14 @@ def montar_kpis():
     hospitais_total = Hospital.query.count()
     hospitais_ativos = Hospital.query.filter_by(ativo=True).count()
 
-    socorristas_total = Socorrista.query.count()
-    socorristas_ativos = (
-        Socorrista.query.join(Usuario, Socorrista.usuario_id == Usuario.id)
-        .filter(Usuario.ativo.is_(True))
-        .count()
+    # visitantes do modo demonstração não contam como equipe
+    from app.services.demo_service import DOMINIO_VISITANTE
+
+    equipe = Socorrista.query.join(Usuario, Socorrista.usuario_id == Usuario.id).filter(
+        ~Usuario.email.like(f"%{DOMINIO_VISITANTE}")
     )
+    socorristas_total = equipe.count()
+    socorristas_ativos = equipe.filter(Usuario.ativo.is_(True)).count()
 
     admins_total = Usuario.query.filter_by(papel=PapelEnum.admin).count()
 
@@ -134,6 +170,8 @@ def montar_kpis():
         Ocorrencia.veiculo == VeiculoEnum.helicoptero, Ocorrencia.status.in_(ATIVAS)
     ).count()
 
+    hospitais_status = _hospitais_com_status()
+
     return {
         "atualizado_em": datetime.utcnow().isoformat() + "Z",
         "hospitais": {"total": hospitais_total, "ativos": hospitais_ativos},
@@ -146,7 +184,8 @@ def montar_kpis():
         "total_ocorrencias": total_ocorrencias,
         "total_finalizadas": total_finalizadas,
         "tempo_medio_atendimento_min": _tempo_medio_atendimento_min(),
-        "capacidade_hospitais": _capacidade_hospitais(),
+        "capacidade_hospitais": _capacidade_hospitais(hospitais_status),
+        "mapa": _mapa_operacao(hospitais_status),
         "veiculos_ativos": {"ambulancia": ambulancias_ativas, "helicoptero": helicopteros_ativos},
         "ultimas_acoes": _ultimas_acoes(),
     }

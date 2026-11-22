@@ -26,9 +26,11 @@ function iniciarRastreamentoHospital(ocorrenciaId) {
             window.OrbisMapaOcorrencia.atualizarPosicaoSocorrista(dados.lat, dados.lng);
         }
         atualizarTextoEta(dados.distancia_estimada_km, dados.tempo_estimado_min);
+        if (typeof atualizarProgressoTrajeto === "function") atualizarProgressoTrajeto(dados.progresso);
     });
 
     socket.on("trajeto_concluido", () => {
+        if (typeof atualizarProgressoTrajeto === "function") atualizarProgressoTrajeto(1);
         trajetoConcluido = true;
         if (avisoEl) avisoEl.hidden = true;
     });

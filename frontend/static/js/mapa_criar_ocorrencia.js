@@ -6,12 +6,10 @@
  */
 function iniciarMapaCriarOcorrencia(opcoes) {
     const CENTRO_PADRAO = [-15.7942, -47.8822]; // Brasília, usado só se a localização falhar
-    const mapa = L.map("mapa-criar-ocorrencia").setView(CENTRO_PADRAO, 13);
+    const mapa = L.map("mapa-criar-ocorrencia", { zoomControl: false }).setView(CENTRO_PADRAO, 13);
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; colaboradores do OpenStreetMap",
-        maxZoom: 19,
-    }).addTo(mapa);
+    window.OrbisIcones.camadaBase().addTo(mapa);
+    L.control.zoom({ position: "bottomleft" }).addTo(mapa);
 
     const localInput = document.getElementById("local");
     const localHint = document.getElementById("local-hint");
@@ -23,7 +21,7 @@ function iniciarMapaCriarOcorrencia(opcoes) {
             (posicao) => {
                 esconderDialogoLocalizacao();
                 mapa.setView([posicao.lat, posicao.lng], 15);
-                L.marker([posicao.lat, posicao.lng]).addTo(mapa);
+                L.marker([posicao.lat, posicao.lng], { title: "Sua localização" }).addTo(mapa);
                 L.circle([posicao.lat, posicao.lng], { radius: posicao.precisao, opacity: 0.3 }).addTo(mapa);
 
                 latInput.value = posicao.lat;

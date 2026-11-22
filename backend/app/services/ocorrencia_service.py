@@ -1,3 +1,4 @@
+import math
 from datetime import datetime
 
 from flask import abort
@@ -11,7 +12,7 @@ from app.models.ocorrencia import (
     TipoRotaEnum,
     VeiculoEnum,
 )
-from app.models.paciente import Paciente, PrioridadeEnum
+from app.models.paciente import REGIOES_LESAO, Paciente, PrioridadeEnum
 from app.models.usuario import PapelEnum
 from app.services import anexo_service, rota_service
 from app.services.anexo_service import AnexoError
@@ -27,6 +28,11 @@ MENSAGEM_CHEGADA_NAO_CONFIRMADA = (
 MENSAGEM_FINALIZAR_SEM_CHEGADA = (
     "Não foi possível finalizar ocorrência, por favor se dirija ao hospital destino!"
 )
+MENSAGEM_OCORRENCIA_ENCERRADA = "Esta ocorrência já foi finalizada e não pode mais ser alterada."
+MENSAGEM_HOSPITAL_JA_ESCOLHIDO = (
+    "Esta ocorrência já tem hospital de destino. Use \"Voltar\" para trocar antes de iniciar o trajeto."
+)
+MENSAGEM_COORDENADAS_INVALIDAS = "Coordenadas inválidas."
 MENSAGEM_NAO_PODE_TROCAR_HOSPITAL = (
     "Não é possível trocar o hospital: o trajeto até ele já foi iniciado."
 )
@@ -76,6 +82,33 @@ def verificar_acesso_leitura_ocorrencia(ocorrencia, usuario):
     raise AcessoNaoAutorizadoError()
 
 
+def verificar_operacao(ocorrencia, usuario, *status_permitidos):
+    """Ações que ALTERAM a ocorrência: além de ser o socorrista dono (RN-008),
+    ele precisa estar ativo (RN-014) e a ocorrência precisa estar num status
+    em que a ação faz sentido — o servidor não confia nos botões da tela."""
+    verificar_dono_ocorrencia(ocorrencia, usuario)
+    if not usuario.ativo:
+        raise OcorrenciaError(MENSAGEM_SOCORRISTA_INATIVO)
+    if status_permitidos and ocorrencia.status not in status_permitidos:
+        if ocorrencia.status == StatusOcorrenciaEnum.finalizada:
+            raise OcorrenciaError(MENSAGEM_OCORRENCIA_ENCERRADA)
+        raise OcorrenciaError(MENSAGEM_HOSPITAL_JA_ESCOLHIDO)
+
+
+ATIVAS = (StatusOcorrenciaEnum.aberta, StatusOcorrenciaEnum.em_transporte)
+
+
+def coordenada_valida(lat, lng):
+    """Latitude/longitude finitas e dentro do globo (recusa nan, inf, 999)."""
+    try:
+        lat, lng = float(lat), float(lng)
+    except (TypeError, ValueError):
+        return None
+    if not (math.isfinite(lat) and math.isfinite(lng)) or abs(lat) > 90 or abs(lng) > 180:
+        return None
+    return lat, lng
+
+
 # --------------------------------------------------------------- Ocorrência
 
 def criar_ocorrencia(dados, usuario_atual):
@@ -90,6 +123,8 @@ def criar_ocorrencia(dados, usuario_atual):
 
     if not local:
         raise OcorrenciaError("O campo local é obrigatório.", campo="local")
+    if len(local) > 255:
+        raise OcorrenciaError("O campo local aceita no máximo 255 caracteres.", campo="local")
 
     try:
         veiculo = VeiculoEnum(veiculo_raw)
@@ -100,8 +135,8 @@ def criar_ocorrencia(dados, usuario_atual):
     # na própria tela de criação. Opcional aqui — se a permissão for
     # negada, a ocorrência ainda é criada, só não vai poder gerar rota até
     # a localização ser capturada (retomado na tela de detalhe).
-    latitude_atual = _float_ou_none(dados.get("latitude"))
-    longitude_atual = _float_ou_none(dados.get("longitude"))
+    coordenadas = coordenada_valida(dados.get("latitude"), dados.get("longitude"))
+    latitude_atual, longitude_atual = coordenadas or (None, None)
 
     ocorrencia = Ocorrencia(
         socorrista_id=usuario_atual.socorrista.id,
@@ -123,10 +158,12 @@ def salvar_localizacao(ocorrencia_id, latitude, longitude, usuario_atual):
     é a mesma operação nos dois casos: atualiza a posição e recalcula o
     ETA se já existir uma rota gerada."""
     ocorrencia = obter_ocorrencia(ocorrencia_id)
-    verificar_dono_ocorrencia(ocorrencia, usuario_atual)
+    verificar_operacao(ocorrencia, usuario_atual, *ATIVAS)
+    coordenadas = coordenada_valida(latitude, longitude)
+    if coordenadas is None:
+        raise OcorrenciaError(MENSAGEM_COORDENADAS_INVALIDAS)
 
-    ocorrencia.latitude_atual = latitude
-    ocorrencia.longitude_atual = longitude
+    ocorrencia.latitude_atual, ocorrencia.longitude_atual = coordenadas
     rota_service.recalcular_eta(ocorrencia)
     db.session.commit()
     return ocorrencia
@@ -180,28 +217,68 @@ def _calcular_prioridade(paciente):
     return PrioridadeEnum.media
 
 
-def _int_ou_none(valor):
-    valor = (valor or "").strip()
-    if not valor:
-        return None
-    try:
-        return int(valor)
-    except ValueError:
-        raise OcorrenciaError(MENSAGEM_PRONTUARIO_INVALIDO)
+# Faixas fisiologicamente possíveis: fora delas é erro de digitação, e
+# valores absurdos (ex.: saturação -5) mudariam a prioridade (RN-010).
+FAIXAS = {
+    "frequencia_cardiaca": (0, 350, "frequência cardíaca"),
+    "frequencia_respiratoria": (0, 120, "frequência respiratória"),
+    "saturacao_o2": (0, 100, "saturação de O₂"),
+    "glasgow": (3, 15, "Glasgow"),
+    "temperatura": (25, 45, "temperatura"),
+}
+# Tamanho máximo dos campos de texto curtos (o mesmo das colunas do banco).
+TAMANHOS = {
+    "nome": (150, "nome"),
+    "cpf": (14, "CPF"),
+    "idade": (20, "idade"),
+    "pressao_arterial": (20, "pressão arterial"),
+    "nivel_consciencia": (100, "nível de consciência"),
+}
 
 
-def _float_ou_none(valor):
-    valor = (valor or "").strip()
+def _erro_campo(campo, detalhe):
+    return OcorrenciaError(f"{MENSAGEM_PRONTUARIO_INVALIDO} {detalhe}", campo=campo)
+
+
+def _texto(dados, campo):
+    valor = (dados.get(campo) or "").strip()
+    limite, rotulo = TAMANHOS[campo]
+    if len(valor) > limite:
+        raise _erro_campo(campo, f"O campo {rotulo} aceita no máximo {limite} caracteres.")
+    return valor or None
+
+
+def _numero(dados, campo, tipo):
+    valor = (dados.get(campo) or "").strip()
     if not valor:
         return None
+    minimo, maximo, rotulo = FAIXAS[campo]
     try:
-        return float(valor.replace(",", "."))
+        numero = tipo(valor.replace(",", ".") if tipo is float else valor)
     except ValueError:
-        raise OcorrenciaError(MENSAGEM_PRONTUARIO_INVALIDO)
+        raise _erro_campo(campo, f"O campo {rotulo} precisa ser um número.")
+    if not (math.isfinite(numero) and minimo <= numero <= maximo):
+        raise _erro_campo(campo, f"O campo {rotulo} deve estar entre {minimo} e {maximo}.")
+    return numero
+
+
+def _regioes_lesao(dados):
+    """Regiões marcadas no boneco 3D. Aceita o campo repetido do formulário
+    (regioes_lesao=cabeca&regioes_lesao=torax) ou uma lista separada por
+    vírgula (app). Códigos desconhecidos são ignorados; guarda na ordem
+    canônica de REGIOES_LESAO."""
+    if hasattr(dados, "getlist"):
+        brutos = dados.getlist("regioes_lesao")
+    else:
+        valor = dados.get("regioes_lesao")
+        brutos = valor if isinstance(valor, list) else [valor or ""]
+    marcadas = {parte.strip() for bruto in brutos for parte in str(bruto).split(",")}
+    validas = [codigo for codigo in REGIOES_LESAO if codigo in marcadas]
+    return ",".join(validas) or None
 
 
 def _preencher_paciente(paciente, dados):
-    nome = (dados.get("nome") or "").strip()
+    nome = _texto(dados, "nome") or ""
     motivo_chamado = (dados.get("motivo_chamado") or "").strip()
 
     if not nome:
@@ -215,21 +292,19 @@ def _preencher_paciente(paciente, dados):
     documentos_em_maos = documentos_raw if documentos_raw in ("sim", "nao") else None
 
     paciente.nome = nome
-    paciente.cpf = (dados.get("cpf") or "").strip() or None
-    paciente.idade = (dados.get("idade") or "").strip() or None
+    paciente.cpf = _texto(dados, "cpf")
+    paciente.idade = _texto(dados, "idade")
     paciente.documentos_em_maos = (
         None if documentos_em_maos is None else documentos_em_maos == "sim"
     )
     paciente.motivo_chamado = motivo_chamado
-    paciente.pressao_arterial = (dados.get("pressao_arterial") or "").strip() or None
-    paciente.frequencia_cardiaca = _int_ou_none(dados.get("frequencia_cardiaca"))
-    paciente.frequencia_respiratoria = _int_ou_none(
-        dados.get("frequencia_respiratoria")
-    )
-    paciente.saturacao_o2 = _int_ou_none(dados.get("saturacao_o2"))
-    paciente.temperatura = _float_ou_none(dados.get("temperatura"))
-    paciente.nivel_consciencia = (dados.get("nivel_consciencia") or "").strip() or None
-    paciente.glasgow = _int_ou_none(dados.get("glasgow"))
+    paciente.pressao_arterial = _texto(dados, "pressao_arterial")
+    paciente.frequencia_cardiaca = _numero(dados, "frequencia_cardiaca", int)
+    paciente.frequencia_respiratoria = _numero(dados, "frequencia_respiratoria", int)
+    paciente.saturacao_o2 = _numero(dados, "saturacao_o2", int)
+    paciente.temperatura = _numero(dados, "temperatura", float)
+    paciente.nivel_consciencia = _texto(dados, "nivel_consciencia")
+    paciente.glasgow = _numero(dados, "glasgow", int)
     paciente.estavel = dados.get("estavel") == "on"
     paciente.agravamento_registrado = dados.get("agravamento_registrado") == "on"
     paciente.melhorando = dados.get("melhorando") == "on"
@@ -238,6 +313,7 @@ def _preencher_paciente(paciente, dados):
     )
     paciente.observacao = (dados.get("observacao") or "").strip() or None
     paciente.diagnostico = (dados.get("diagnostico") or "").strip() or None
+    paciente.regioes_lesao = _regioes_lesao(dados)
 
     paciente.prioridade = _calcular_prioridade(paciente)
 
@@ -253,9 +329,17 @@ def _processar_anexos(paciente, arquivos, remover_ids):
     return preparadas
 
 
+def _sem_fotos_de_visitante(usuario, arquivos):
+    """Modo demonstração: o link é público, então visitante não envia fotos."""
+    from app.services import demo_service
+
+    return None if demo_service.eh_visitante(usuario) else arquivos
+
+
 def adicionar_paciente(ocorrencia_id, dados, usuario_atual, arquivos=None):
+    arquivos = _sem_fotos_de_visitante(usuario_atual, arquivos)
     ocorrencia = obter_ocorrencia(ocorrencia_id)
-    verificar_dono_ocorrencia(ocorrencia, usuario_atual)
+    verificar_operacao(ocorrencia, usuario_atual, *ATIVAS)
 
     paciente = Paciente(ocorrencia_id=ocorrencia.id)
     _preencher_paciente(paciente, dados)
@@ -276,15 +360,23 @@ def obter_paciente(ocorrencia_id, paciente_id):
 
 
 def atualizar_paciente(ocorrencia_id, paciente_id, dados, usuario_atual, arquivos=None, remover_ids=None):
+    arquivos = _sem_fotos_de_visitante(usuario_atual, arquivos)
     ocorrencia = obter_ocorrencia(ocorrencia_id)
-    verificar_dono_ocorrencia(ocorrencia, usuario_atual)
+    verificar_operacao(ocorrencia, usuario_atual, *ATIVAS)
 
     paciente = obter_paciente(ocorrencia_id, paciente_id)
     preparadas = _processar_anexos(paciente, arquivos, remover_ids)
-    _preencher_paciente(paciente, dados)
-    anexo_service.remover(paciente, remover_ids or [])
+    try:
+        _preencher_paciente(paciente, dados)
+    except OcorrenciaError:
+        db.session.rollback()
+        raise
+    # os arquivos das fotos removidas só saem do disco depois que o banco
+    # confirmou — se algo falhar antes, a foto continua íntegra.
+    arquivos_removidos = anexo_service.remover(paciente, remover_ids or [])
     anexo_service.gravar(paciente, preparadas, usuario_atual)
     db.session.commit()
+    anexo_service.apagar_arquivos(arquivos_removidos)
     return paciente
 
 
@@ -338,9 +430,22 @@ def listar_hospitais_disponiveis(ocorrencia):
 
 def selecionar_hospital(ocorrencia_id, hospital_id, usuario_atual):
     ocorrencia = obter_ocorrencia(ocorrencia_id)
-    verificar_dono_ocorrencia(ocorrencia, usuario_atual)
+    verificar_operacao(ocorrencia, usuario_atual, StatusOcorrenciaEnum.aberta)
 
-    hospital = Hospital.query.get_or_404(hospital_id)
+    try:
+        hospital_id = int(hospital_id)
+    except (TypeError, ValueError):
+        abort(404)
+    if not 0 < hospital_id < 2**31:
+        abort(404)
+    # Trava a linha do hospital até o commit: dois socorristas escolhendo o
+    # mesmo hospital ao mesmo tempo passam por aqui um de cada vez, e o
+    # segundo já conta a ocorrência do primeiro na checagem de lotação (RN-006).
+    hospital = (
+        db.session.query(Hospital).filter_by(id=hospital_id).with_for_update().first()
+    )
+    if hospital is None:
+        abort(404)
 
     # RN-003 revalidada no servidor — não confia na lista exibida no GET.
     compativel = hospital.ativo and (
@@ -379,7 +484,7 @@ def desfazer_selecao_hospital(ocorrencia_id, usuario_atual):
     socorrista e AQUELE hospital (RN-016) e não pode ficar visível para o
     próximo. Devolve o id do hospital anterior, para avisá-lo."""
     ocorrencia = obter_ocorrencia(ocorrencia_id)
-    verificar_dono_ocorrencia(ocorrencia, usuario_atual)
+    verificar_operacao(ocorrencia, usuario_atual)
 
     if (
         ocorrencia.status != StatusOcorrenciaEnum.em_transporte
@@ -412,7 +517,7 @@ def marcar_chegada(ocorrencia_id, usuario_atual):
     """HU-021: só libera se a posição atual estiver dentro do raio de
     tolerância (RN, RAIO_CHEGADA_KM em rota_service) do hospital destino."""
     ocorrencia = obter_ocorrencia(ocorrencia_id)
-    verificar_dono_ocorrencia(ocorrencia, usuario_atual)
+    verificar_operacao(ocorrencia, usuario_atual)
 
     if ocorrencia.status != StatusOcorrenciaEnum.em_transporte:
         raise OcorrenciaError(MENSAGEM_CHEGADA_NAO_CONFIRMADA)
@@ -432,7 +537,7 @@ def finalizar_ocorrencia(ocorrencia_id, desfecho, usuario_atual):
     mas uma falha na geração do relatório NUNCA desfaz a finalização —
     ela já está commitada antes de tentarmos montar o relatório."""
     ocorrencia = obter_ocorrencia(ocorrencia_id)
-    verificar_dono_ocorrencia(ocorrencia, usuario_atual)
+    verificar_operacao(ocorrencia, usuario_atual, StatusOcorrenciaEnum.em_transporte)
 
     if ocorrencia.chegada_confirmada_em is None:
         raise OcorrenciaError(MENSAGEM_FINALIZAR_SEM_CHEGADA)

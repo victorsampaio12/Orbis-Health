@@ -62,4 +62,7 @@ def downgrade():
     op.drop_table('socorrista')
     op.drop_table('hospital')
     op.drop_table('usuario')
+    # o PostgreSQL não apaga os tipos enum junto com a tabela; sem isto um
+    # novo `upgrade` depois do `downgrade` falha com "type already exists"
+    op.execute("DROP TYPE IF EXISTS papel_enum")
     # ### end Alembic commands ###

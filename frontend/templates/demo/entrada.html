@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% import "_icons.html" as icons %}
+{% import "_marca.html" as marca %}
+
+{% block title %}Demonstração - OrbisHealth{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/demo.css') }}">{% endblock %}
+
+{% block content %}
+<main class="demo">
+    <header class="demo-topo">
+        <span class="demo-logo">{{ marca.marca(20) }}</span>
+        <span class="demo-nome">Orbis<em>Health</em></span>
+        <span class="demo-selo">Demonstração</span>
+    </header>
+
+    <section class="demo-capa">
+        <p class="demo-sobre">Trabalho de Conclusão de Curso</p>
+        <h1>Seja o socorrista do SAMU por alguns minutos</h1>
+        <p class="demo-texto">Você vai abrir uma emergência, registrar o paciente, escolher o hospital
+            e acompanhar a viatura até a chegada — como no aplicativo da equipe.</p>
+    </section>
+
+    <ol class="demo-passos">
+        <li><span>1</span><div><strong>Abra a ocorrência</strong><small>Confirme o local e escolha ambulância ou helicóptero.</small></div></li>
+        <li><span>2</span><div><strong>Registre o paciente</strong><small>Sinais vitais e onde está a lesão, no corpo 3D.</small></div></li>
+        <li><span>3</span><div><strong>Escolha o hospital</strong><small>Por vagas e estrutura, entre os hospitais públicos do DF e Entorno.</small></div></li>
+        <li><span>4</span><div><strong>Acompanhe o trajeto</strong><small>A viatura percorre a rota em cerca de 2 minutos. O hospital responde no chat.</small></div></li>
+    </ol>
+
+    <form method="POST" action="{{ url_for('demo.entrar') }}" class="demo-acao">
+        <button type="submit" class="demo-botao">Começar como socorrista {{ icons.icon("arrow-right", size=18) }}</button>
+        <p class="demo-aviso">{{ icons.icon("shield-check", size=14) }}
+            Sem cadastro e sem senha. Sua conta é temporária e é apagada em 24 horas.
+            Use dados fictícios — não informe dados reais de pacientes.</p>
+    </form>
+
+    <p class="demo-rodape">Já tem uma conta da equipe? <a href="{{ url_for('auth.login') }}">Entrar</a></p>
+</main>
+{% endblock %}

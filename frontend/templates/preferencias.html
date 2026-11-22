@@ -15,12 +15,19 @@
 </label>
 {% endmacro %}
 
+{% block cel_voltar %}{{ url_for('auth.dashboard') }}{% endblock %}
+{% block cel_titulo %}Preferências{% endblock %}
+
 {% block app_content %}
 <div class="admin-page">
-    <h1>Preferências</h1>
-    <p class="admin-subtitle">Ajustes da sua conta — valem em qualquer computador em que você entrar.</p>
+    <header class="admin-page-header">
+        <div>
+            <h1>Preferências</h1>
+            <p class="admin-subtitle">Ajustes da sua conta — valem em qualquer computador em que você entrar.</p>
+        </div>
+    </header>
 
-    <form class="admin-form" method="POST" action="{{ url_for('pages.preferencias') }}">
+    <form class="admin-form form-grade" method="POST" action="{{ url_for('pages.preferencias') }}">
         <fieldset>
             <legend>Navegação</legend>
             {{ interruptor("menu_recolhido", "Menu lateral recolhido por padrão",

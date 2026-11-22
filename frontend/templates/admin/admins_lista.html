@@ -1,14 +1,19 @@
 {% extends "app_base.html" %}
+{% import "_icons.html" as icons %}
 
-{% block title %}Admins - OrbisHealth{% endblock %}
+{% block title %}Administradores - OrbisHealth{% endblock %}
 
 {% block app_content %}
 <div class="admin-page">
-    <div class="admin-page-header">
-        <h1>Admins</h1>
-        <a class="btn btn-primary" href="{{ url_for('admin.novo_admin') }}">+ Novo admin</a>
-    </div>
+    <header class="admin-page-header">
+        <div>
+            <h1>Admins</h1>
+            <p class="admin-subtitle">Pessoas com acesso à administração do sistema.</p>
+        </div>
+        <a class="btn btn-primary" href="{{ url_for('admin.novo_admin') }}">{{ icons.icon("plus", 16) }} Novo admin</a>
+    </header>
 
+    <div class="tabela-card">
     <table class="admin-table">
         <thead>
             <tr>
@@ -48,5 +53,6 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
 </div>
 {% endblock %}

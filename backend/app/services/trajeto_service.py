@@ -22,7 +22,7 @@ from flask import current_app
 
 from app import db, socketio
 from app.models.ocorrencia import Ocorrencia, StatusOcorrenciaEnum
-from app.services import ocorrencia_service, rota_service
+from app.services import demo_service, ocorrencia_service, rota_service
 from app.services.ocorrencia_service import OcorrenciaError
 
 TICK_SEGUNDOS = 2
@@ -79,7 +79,7 @@ def _posicao_em(coords, acumulado, distancia):
 
 def iniciar_trajeto(ocorrencia_id, usuario_atual):
     ocorrencia = ocorrencia_service.obter_ocorrencia(ocorrencia_id)
-    ocorrencia_service.verificar_dono_ocorrencia(ocorrencia, usuario_atual)
+    ocorrencia_service.verificar_operacao(ocorrencia, usuario_atual)
 
     if (
         ocorrencia.status != StatusOcorrenciaEnum.em_transporte
@@ -97,7 +97,7 @@ def iniciar_trajeto(ocorrencia_id, usuario_atual):
             else DURACAO_PADRAO_S
         )
         ocorrencia.trajeto_iniciado_em = datetime.utcnow()
-        ocorrencia.trajeto_duracao_s = max(DURACAO_MIN_S, duracao)
+        ocorrencia.trajeto_duracao_s = demo_service.duracao_trajeto(max(DURACAO_MIN_S, duracao), usuario_atual)
         db.session.commit()
 
     garantir_em_execucao(ocorrencia)

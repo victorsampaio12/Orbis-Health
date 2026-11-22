@@ -1,0 +1,38 @@
+{# Visores 3D (orbis3d.js). Cada um traz uma ilustração de reserva que fica
+   visível até o 3D ficar pronto — e continua lá se o navegador não tiver WebGL.
+   A página que usa um visor precisa incluir o script: {{ visor.script() }} #}
+{% import "_veiculos.html" as veiculos %}
+
+{% macro veiculo3d(tipo, movimento=false, classe="", girar=false, interativo=false,
+                   azimute=38, elevacao=16, folga=0.9, id=none, uid="v3d") -%}
+<div class="visor visor-veiculo {{ classe }}" {% if id %}id="{{ id }}"{% endif %}
+     data-3d="veiculo" data-tipo="{{ tipo }}" data-movimento="{{ '1' if movimento else '0' }}"
+     data-girar="{{ '1' if girar else '0' }}" data-interativo="{{ '1' if interativo else '0' }}"
+     data-azimute="{{ azimute }}" data-elevacao="{{ elevacao }}" data-folga="{{ folga }}"
+     data-modelo="{{ url_for('static', filename='modelos/' ~ tipo ~ '.glb') }}"
+     role="img" aria-label="{{ 'Helicóptero' if tipo == 'helicoptero' else 'Ambulância' }} em 3D">
+    <span class="visor-reserva">{{ veiculos.veiculo(tipo, 64, ativo=movimento, uid=uid) }}</span>
+</div>
+{%- endmacro %}
+
+{% macro corpo3d(regioes=[], editavel=false, campo="regioes_lesao", classe="") -%}
+<div class="visor visor-corpo {{ classe }}" data-3d="corpo" data-regioes="{{ regioes | join(',') }}"
+     data-editavel="{{ '1' if editavel else '0' }}" data-campo="{{ campo }}"
+     data-modelo="{{ url_for('static', filename='modelos/corpo.glb') }}"
+     role="img" aria-label="Corpo humano em 3D{% if regioes %} — regiões com lesão: {% for r in regioes %}{{ REGIOES_LESAO[r] }}{{ ', ' if not loop.last }}{% endfor %}{% endif %}">
+    <span class="visor-reserva visor-reserva-corpo">
+        <svg viewBox="0 0 60 150" width="70" height="170" aria-hidden="true">
+            <circle cx="30" cy="12" r="9" fill="#dfe5ee"/>
+            <rect x="17" y="24" width="26" height="52" rx="12" fill="#dfe5ee"/>
+            <rect x="6" y="26" width="9" height="50" rx="4.5" fill="#dfe5ee"/>
+            <rect x="45" y="26" width="9" height="50" rx="4.5" fill="#dfe5ee"/>
+            <rect x="19" y="76" width="10" height="70" rx="5" fill="#dfe5ee"/>
+            <rect x="31" y="76" width="10" height="70" rx="5" fill="#dfe5ee"/>
+        </svg>
+    </span>
+</div>
+{%- endmacro %}
+
+{% macro script() -%}
+<script type="module" src="{{ url_for('static', filename='js/orbis3d.js') }}"></script>
+{%- endmacro %}

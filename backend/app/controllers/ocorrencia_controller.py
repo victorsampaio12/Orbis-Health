@@ -26,6 +26,16 @@ ocorrencia_bp = Blueprint("ocorrencia", __name__, url_prefix="/ocorrencias")
 def nova():
     ativa = ocorrencia_service.obter_ocorrencia_ativa_do_socorrista(current_user)
     if ativa:
+        if request.method == "POST":
+            # O formulário pode ter sido aberto antes de outra ocorrência
+            # surgir (ex.: criada pelo app). Sem este aviso, o socorrista
+            # escolhia helicóptero e "caía" na ocorrência de ambulância.
+            veiculo = "Ambulância" if ativa.veiculo.value == "ambulancia" else "Helicóptero"
+            flash(
+                f"Você já tem uma ocorrência em andamento (EMG-{ativa.id:04d}, {veiculo}). "
+                "Finalize-a antes de abrir outra.",
+                "error",
+            )
         return redirect(url_for("ocorrencia.ver", ocorrencia_id=ativa.id))
 
     if request.method == "POST":
@@ -85,15 +95,21 @@ def ver(ocorrencia_id):
         "distancia_atual_km": ocorrencia.distancia_estimada_km,
         "tempo_estimado_min": ocorrencia.tempo_estimado_min,
         "trajeto_estado": trajeto_service.estado(ocorrencia),
+        # fração já percorrida da rota (barra de progresso do painel ao vivo)
+        "progresso": (
+            1.0 if ocorrencia.chegada_confirmada_em or ocorrencia.status.value == "finalizada"
+            else rota_service.progresso_na_rota(ocorrencia)
+        ),
     }
 
     return render_template(
         "ocorrencias/detalhe.html",
+        progresso=mapa_dados["progresso"],
         ocorrencia=ocorrencia,
         trajeto_estado=mapa_dados["trajeto_estado"],
         pacientes=pacientes,
         eh_dono=eh_dono,
-        mapa_dados_json=json.dumps(mapa_dados),
+        mapa_dados_json=json.dumps(mapa_dados).replace("<", "\\u003c"),  # dentro de <script>: "</script>" num nome não fecha a tag
     )
 
 
@@ -258,6 +274,7 @@ def editar_paciente(ocorrencia_id, paciente_id):
         "parada_cardiorrespiratoria": "on" if paciente.parada_cardiorrespiratoria else "",
         "observacao": paciente.observacao,
         "diagnostico": paciente.diagnostico,
+        "regioes_lesao": paciente.regioes_lesao,
     }
     # campos opcionais ficam None quando nunca preenchidos — sem isso, o
     # template renderiza o texto literal "None" no value="" do input.
@@ -313,7 +330,7 @@ def hospitais(ocorrencia_id):
         "ocorrencias/hospitais.html",
         ocorrencia=ocorrencia,
         hospitais=lista,
-        mapa_dados_json=json.dumps(mapa_dados),
+        mapa_dados_json=json.dumps(mapa_dados).replace("<", "\\u003c"),  # dentro de <script>: "</script>" num nome não fecha a tag
     )
 
 
@@ -371,6 +388,10 @@ def trocar_hospital(ocorrencia_id):
         "emergencia_cancelada", aviso,
         to=[f"hospital_{hospital_anterior_id}", f"ocorrencia_{ocorrencia_id}"],
     )
+    # Esvazia a sala da ocorrência: o hospital abandonado não pode continuar
+    # recebendo a posição da viatura nem o chat com o novo destino (RN-007 /
+    # RN-016). Quem tem acesso entra de novo ao carregar a página.
+    socketio.close_room(f"ocorrencia_{ocorrencia_id}")
 
     flash("Seleção desfeita. Escolha outro hospital de destino.", "success")
     return redirect(url_for("ocorrencia.hospitais", ocorrencia_id=ocorrencia_id))
@@ -409,6 +430,8 @@ def salvar_localizacao(ocorrencia_id):
         ocorrencia_service.salvar_localizacao(ocorrencia_id, lat, lng, current_user)
     except AcessoNaoAutorizadoError:
         return jsonify({"ok": False, "erro": ocorrencia_service.MENSAGEM_ACESSO_NAO_AUTORIZADO}), 403
+    except OcorrenciaError as erro:
+        return jsonify({"ok": False, "erro": erro.message}), 400
 
     return jsonify({"ok": True})
 
@@ -420,10 +443,13 @@ def gerar_rota(ocorrencia_id):
     ocorrencia = ocorrencia_service.obter_ocorrencia(ocorrencia_id)
 
     try:
-        ocorrencia_service.verificar_dono_ocorrencia(ocorrencia, current_user)
+        ocorrencia_service.verificar_operacao(ocorrencia, current_user, *ocorrencia_service.ATIVAS)
     except AcessoNaoAutorizadoError as erro:
         flash(erro.message, "error")
         return redirect(url_for("auth.dashboard"))
+    except OcorrenciaError as erro:
+        flash(erro.message, "error")
+        return redirect(url_for("ocorrencia.ver", ocorrencia_id=ocorrencia_id))
 
     try:
         rota_service.gerar_rota(ocorrencia)

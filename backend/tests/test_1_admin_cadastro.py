@@ -47,9 +47,16 @@ class TestAdminCadastro:
             assert item in itens
 
     def test_api_sugestoes_de_endereco(self, admin_page, servidor):
-        """Autocomplete de endereço devolve candidatos reais do OpenStreetMap."""
-        resp = admin_page.request.get(f"{servidor}/admin/enderecos-sugestoes?texto=Hospital de Base Brasilia")
-        sugestoes = resp.json()["sugestoes"]
+        """Autocomplete de endereço devolve candidatos reais do OpenStreetMap.
+
+        O Nominatim público limita a 1 requisição/s e às vezes responde vazio;
+        tenta até 3 vezes antes de concluir que a integração falhou."""
+        for tentativa in range(3):
+            resp = admin_page.request.get(f"{servidor}/admin/enderecos-sugestoes?texto=Hospital de Base Brasilia")
+            sugestoes = resp.json()["sugestoes"]
+            if sugestoes:
+                break
+            admin_page.wait_for_timeout(2000)
 
         assert resp.status == 200
         assert len(sugestoes) >= 1
@@ -214,9 +221,13 @@ class TestAdminCadastro:
         assert dados["hospitais"] == {"total": 2, "ativos": 1}
         assert dados["socorristas"] == {"total": 2, "ativos": 1}
         assert len(dados["ultimas_acoes"]) > 0
+        # mapa da operação: só hospitais ativos; nenhuma viatura em atendimento ainda
+        assert dados["mapa"]["viaturas"] == []
+        assert len(dados["mapa"]["hospitais"]) <= 1
 
         admin_page.goto(f"{servidor}/dashboard")
         admin_page.wait_for_load_state("networkidle")
+        assert admin_page.locator("#mapa-operacao.leaflet-container").count() == 1
         auditoria = admin_page.inner_text(".dash-auditoria-lista")
         assert "Admin Zero" in auditoria
         # mostra o nome de quem foi afetado, não só o id

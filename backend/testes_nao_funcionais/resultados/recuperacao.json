@@ -1,0 +1,98 @@
+{
+  "queda_trajeto": {
+    "ocorrencia": 36,
+    "viatura_andando_antes_da_queda": true,
+    "posicao_congelada_com_servidor_fora": true,
+    "tempo_para_servidor_voltar_s": 0.6,
+    "retomou_depois_de_reabrir_o_painel": true,
+    "pulou_para_a_posicao_correta_pelo_relogio": true
+  },
+  "banco": {
+    "respostas_apos_reinicio_do_banco": [
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200
+    ],
+    "falhas": 0,
+    "recuperou_sem_reiniciar_servidor": true,
+    "com_banco_desligado": {
+      "status": 500,
+      "tempo_ms": 9
+    },
+    "depois_de_religar": [
+      200,
+      200,
+      200,
+      200,
+      200
+    ]
+  },
+  "servicos_externos": {
+    "osrm_recusando_conexao": {
+      "status_http": 200,
+      "tempo_s": 0.0,
+      "mensagem_ao_usuario": true,
+      "ocorrencia_status": "em_transporte",
+      "hospital_mantido": true,
+      "rota_gravada": false,
+      "nominatim": {
+        "geocodificar": [
+          200,
+          {
+            "latitude": null,
+            "longitude": null
+          }
+        ],
+        "sugestoes": [
+          200,
+          {
+            "sugestoes": []
+          }
+        ],
+        "tempo_s": 0.0
+      }
+    },
+    "osrm_sem_responder": {
+      "status_http": 200,
+      "tempo_s": 8.0,
+      "mensagem_ao_usuario": true,
+      "ocorrencia_status": "em_transporte",
+      "hospital_mantido": true,
+      "rota_gravada": false,
+      "nominatim": {
+        "geocodificar": [
+          200,
+          {
+            "latitude": null,
+            "longitude": null
+          }
+        ],
+        "sugestoes": [
+          200,
+          {
+            "sugestoes": []
+          }
+        ],
+        "tempo_s": 10.0
+      }
+    }
+  },
+  "backup_restauracao": {
+    "contagens_antes(usu/hosp/oc/pac/msg/aud)": "44/22/64/64/141/44",
+    "contagens_depois": "44/22/64/64/141/44",
+    "iguais": true,
+    "dump_ok": true,
+    "restore_ok": true,
+    "tempo_dump_s": 0.11,
+    "tempo_restore_s": 0.16,
+    "tamanho_dump": "56K",
+    "sistema_funciona_apos_restaurar": true
+  }
+}

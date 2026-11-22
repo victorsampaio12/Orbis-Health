@@ -11,6 +11,7 @@ apagados). Pode rodar de novo: o que já existe é pulado.
 
 Uso:
     python seed_demo.py                    # popula / atualiza
+    python seed_demo.py --atualizar-hospitais  # só a rede de hospitais (44, DF + Entorno)
     python seed_demo.py --reativar-trajetos  # no dia da apresentação: põe as
                                              # ambulâncias em movimento de novo
 
@@ -52,53 +53,113 @@ rnd = random.Random(2026)
 
 # --------------------------------------------------------------- hospitais
 # (nome, endereço, lat, lng, heliponto, garagem, capacidade, responsável, e-mail, ativo)
+# Hospitais públicos com pronto-socorro do DF e do Entorno (RIDE-DF), conferidos
+# no CNES (dados abertos do Ministério da Saúde) e no OpenStreetMap em nov/2026.
+# Capacidade e responsáveis são fictícios (demonstração).
 HOSPITAIS = [
-    ("Hospital de Base do Distrito Federal", "SMHS Área Especial, Q. 101 - Asa Sul, Brasília - DF, 70330-150",
-     -15.80033, -47.88842, True, True, 40, "Dra. Helena Duarte", "hbdf@orbishealth.com", True),
-    ("Hospital Regional da Asa Norte (HRAN)", "SMHN Quadra 101 - Asa Norte, Brasília - DF, 70710-905",
-     -15.78482, -47.88284, False, True, 30, "Dr. Marcelo Teixeira", "hran@orbishealth.com", True),
-    ("Hospital Universitário de Brasília (HUB)", "SGAN 605 - Asa Norte, Brasília - DF, 70840-901",
-     -15.77153, -47.87359, False, True, 25, "Dra. Luíza Campos", "hub@orbishealth.com", True),
-    ("Hospital Regional de Taguatinga (HRT)", "QNC 15, Setor C Norte - Taguatinga, Brasília - DF, 72115-700",
-     -15.82199, -48.06937, False, True, 35, "Dr. Rogério Bastos", "hrt@orbishealth.com", True),
-    ("Hospital Regional de Ceilândia (HRC)", "QNM 27 Área Especial 1 - Ceilândia Sul, Brasília - DF, 72215-270",
-     -15.81520, -48.09599, False, True, 5, "Dra. Simone Araújo", "hrc@orbishealth.com", True),
-    ("Hospital Regional do Gama (HRG)", "Av. dos Pioneiros, Setor Central - Gama, Brasília - DF, 72405-901",
-     -16.02330, -48.06945, False, True, 25, "Dr. André Pacheco", "hrg@orbishealth.com", True),
-    ("Hospital Regional de Santa Maria (HRSM)", "AC 102 Conjunto A - Santa Maria, Brasília - DF, 72502-100",
-     -16.04050, -48.03641, True, True, 30, "Dra. Cristina Vasconcelos", "hrsm@orbishealth.com", True),
-    ("Hospital Regional do Guará (HRGu)", "QI 6 Lote 1 - Guará I, Brasília - DF, 71010-900",
-     -15.81816, -47.98626, False, True, 15, "Dr. Paulo Henrique Souza", "hrgu@orbishealth.com", True),
-    ("Hospital Regional de Sobradinho (HRS)", "Quadra 12 Área Especial - Sobradinho, Brasília - DF, 73010-120",
-     -15.64842, -47.79274, False, True, 2, "Dra. Renata Fonseca", "hrs@orbishealth.com", True),
-    ("Hospital Regional de Samambaia (HRSam)", "QS 614 Conjunto C - Samambaia Norte, Brasília - DF, 72322-583",
-     -15.85340, -48.07344, False, True, 20, "Dr. Gustavo Lemos", "hrsam@orbishealth.com", True),
-    ("Hospital Regional de Planaltina (HRPl)", "Av. WL 4, Setor Hospitalar - Planaltina, Brasília - DF, 73310-000",
-     -15.62478, -47.65274, False, True, 15, "Dra. Adriana Melo", "hrpl@orbishealth.com", True),
-    ("Hospital Materno Infantil de Brasília (HMIB)", "SGAS Quadra 608, Módulo A - Asa Sul, Brasília - DF, 70203-080",
-     -15.82347, -47.89680, False, True, 30, "Dra. Beatriz Monteiro", "hmib@orbishealth.com", True),
-    ("Hospital da Região Leste (HRL)", "Quadra 2, Conjunto D, Área Especial - Paranoá, Brasília - DF, 71570-050",
-     -15.78143, -47.78182, False, True, 20, "Dr. Fábio Rezende", "hrl@orbishealth.com", True),
-    ("Hospital Regional de Brazlândia (HRBz)", "Setor Tradicional, BR-080 - Brazlândia, Brasília - DF, 72720-640",
-     -15.67507, -48.20367, False, True, 15, "Dra. Kátia Moura", "hrbz@orbishealth.com", True),
+    # ---- Distrito Federal
+    ('Hospital de Base do Distrito Federal', 'SMHS Área Especial, Quadra 101, Asa Sul, Brasília - DF, CEP 70335-900',
+     -15.80031, -47.88858, True, True, 40, 'Dra. Helena Duarte', 'hbdf@orbishealth.com', True),
+    ('Hospital Regional da Asa Norte (HRAN)', 'SMHN Quadra 101, Asa Norte, Brasília - DF, CEP 70710-100',
+     -15.78495, -47.88285, True, True, 30, 'Dr. Marcelo Teixeira', 'hran@orbishealth.com', True),
+    ('Hospital Universitário de Brasília (HUB)', 'SGAN 605, Avenida L2 Norte, Asa Norte, Brasília - DF, CEP 70840-901',
+     -15.77173, -47.87361, False, True, 25, 'Dra. Luíza Campos', 'hub@orbishealth.com', True),
+    ('Hospital Regional de Taguatinga (HRT)', 'QNC Área Especial nº 24, Taguatinga Norte, Brasília - DF, CEP 72115-902',
+     -15.82243, -48.06932, False, True, 35, 'Dr. Rogério Bastos', 'hrt@orbishealth.com', True),
+    ('Hospital Regional de Ceilândia (HRC)', 'QNM 27 Área Especial 01, Ceilândia, Brasília - DF',
+     -15.81506, -48.09605, True, True, 5, 'Dra. Simone Araújo', 'hrc@orbishealth.com', True),
+    ('Hospital Regional do Gama (HRG)', 'Área Especial nº 1, Setor Central, Gama, Brasília - DF, CEP 72405-901',
+     -16.02329, -48.06944, False, True, 25, 'Dr. André Pacheco', 'hrg@orbishealth.com', True),
+    ('Hospital Regional de Santa Maria (HRSM)', 'AC 102, Conjuntos A/B/C/D, Santa Maria, Brasília - DF, CEP 72502-100',
+     -16.04003, -48.03640, True, True, 30, 'Dra. Cristina Vasconcelos', 'hrsm@orbishealth.com', True),
+    ('Hospital Regional do Guará (HRGu)', 'QI 06, Área Especial, Guará I, Brasília - DF, CEP 71010-006',
+     -15.81817, -47.98626, False, True, 15, 'Dr. Paulo Henrique Souza', 'hrgu@orbishealth.com', True),
+    ('Hospital Regional de Sobradinho (HRS)', 'Quadra 12, Área Especial, Sobradinho, Brasília - DF, CEP 73010-901',
+     -15.64822, -47.79270, True, True, 2, 'Dra. Renata Fonseca', 'hrs@orbishealth.com', True),
+    ('Hospital Regional de Samambaia (HRSam)', 'QS 614, Conjunto C, Lote 12, Samambaia, Brasília - DF, CEP 72322-583',
+     -15.85339, -48.07341, False, True, 20, 'Dr. Gustavo Lemos', 'hrsam@orbishealth.com', True),
+    ('Hospital Regional de Planaltina (HRPl)', 'Avenida WL 4, Área Especial, Setor Hospitalar Oeste, Planaltina, Brasília - DF, CEP 73310-000',
+     -15.62478, -47.65274, True, True, 15, 'Dra. Adriana Melo', 'hrpl@orbishealth.com', True),
+    ('Hospital Materno Infantil de Brasília (HMIB)', 'SGAS 608, Módulo A, Avenida L2 Sul, Asa Sul, Brasília - DF, CEP 70203-900',
+     -15.82347, -47.89681, False, True, 30, 'Dra. Beatriz Monteiro', 'hmib@orbishealth.com', True),
+    ('Hospital da Região Leste (HRL)', 'Quadra 2, Conjunto K, Lote 1, Paranoá, Brasília - DF, CEP 71570-903',
+     -15.78144, -47.78173, True, True, 20, 'Dr. Fábio Rezende', 'hrl@orbishealth.com', True),
+    ('Hospital Regional de Brazlândia (HRBz)', 'Área Especial nº 6, Setor Tradicional, Brazlândia, Brasília - DF, CEP 72720-660',
+     -15.67511, -48.20357, True, True, 15, 'Dra. Kátia Moura', 'hrbz@orbishealth.com', True),
+    ('Hospital da Criança de Brasília José Alencar (HCB)', 'AENW 3, Lote A, Setor Noroeste (SAIN), Brasília - DF, CEP 70684-831',
+     -15.75831, -47.91754, False, True, 20, 'Dra. Marina Albuquerque', 'hcb@orbishealth.com', True),
     # ---- Entorno (Goiás)
-    ("Hospital Regional de Águas Lindas de Goiás", "Rua Rio Verde, Parque da Barragem Setor 8 - Águas Lindas de Goiás - GO",
-     -15.74657, -48.27570, False, True, 25, "Dr. Wellington Assis", "hral@orbishealth.com", True),
-    ("Hospital Municipal Bom Jesus (Águas Lindas de Goiás)", "Quadra 109, Lotes 30/32, Setor 10 - Águas Lindas de Goiás - GO",
-     -15.73818, -48.29041, False, True, 12, "Dra. Sílvia Prates", "hmbj@orbishealth.com", True),
-    ("Hospital Municipal de Santo Antônio do Descoberto", "Rua 15, nº 65, Centro - Santo Antônio do Descoberto - GO",
-     -15.94758, -48.26650, False, True, 10, "Dr. Otávio Freire", "hmsad@orbishealth.com", True),
-    ("Hospital Público de Cidade Ocidental", "Avenida Perimetral Norte - Cidade Ocidental - GO, 72880-000",
-     -16.10997, -47.93687, False, True, 10, "Dra. Lívia Torres", "hpco@orbishealth.com", True),
-    ("Unidade Mista de Saúde de Valparaíso de Goiás", "Rua 71, Jardim Céu Azul - Valparaíso de Goiás - GO, 72871-071",
-     -16.05806, -48.00665, False, True, 8, "Dr. Henrique Brito", "umsv@orbishealth.com", True),
-    ("Hospital Municipal de Formosa", "Rua Valdemar Guimarães, Parque Laguna II - Formosa - GO, 73813-250",
-     -15.54767, -47.32044, False, True, 15, "Dra. Elaine Coutinho", "hmfor@orbishealth.com", True),
-    ("Hospital Municipal de Cristalina", "Avenida Kaled Cosac, Centro - Cristalina - GO, 73850-000",
-     -16.76241, -47.61079, False, True, 10, "Dr. Rodrigo Avelar", "hmcri@orbishealth.com", True),
-    ("Hospital Municipal Dra. Maria Márcia Gonzaga (Padre Bernardo)", "Rua Acre, Vila Maria - Padre Bernardo - GO",
-     -15.15940, -48.28846, False, True, 8, "Dra. Joana Macedo", "hmpb@orbishealth.com", True),
+    ('Hospital Estadual de Águas Lindas Ronaldo Ramos Caiado Filho (HEAL)', 'Rua 19, nº 792, Parque da Barragem Setor 9, Águas Lindas de Goiás - GO, CEP 72910-259',
+     -15.74659, -48.27570, False, True, 25, 'Dr. Wellington Assis', 'hral@orbishealth.com', True),
+    ('Hospital Municipal Bom Jesus (Águas Lindas de Goiás)', 'Quadra 109, Lotes 30/32, Setor 10, Rua Araguaia, Parque da Barragem, Águas Lindas de Goiás - GO, CEP 72925-141',
+     -15.73818, -48.29041, False, True, 12, 'Dra. Sílvia Prates', 'hmbj@orbishealth.com', True),
+    ('Hospital Municipal Dom Luiz Fernandes (Santo Antônio do Descoberto)', 'Rua 15 (Quadra 65), nº 65, Centro, Santo Antônio do Descoberto - GO, CEP 72900-970',
+     -15.94758, -48.26650, False, True, 10, 'Dr. Otávio Freire', 'hmsad@orbishealth.com', True),
+    ('Hospital Municipal de Cidade Ocidental', 'SQ 10, Avenida Perimetral Norte, Centro, Cidade Ocidental - GO, CEP 72880-452',
+     -16.10999, -47.93687, False, True, 10, 'Dra. Lívia Torres', 'hpco@orbishealth.com', True),
+    ('Hospital Municipal de Valparaíso de Goiás (HMV)', 'Rua 60, Quadra 94, Lote 01, Jardim Céu Azul, Valparaíso de Goiás - GO, CEP 72871-061',
+     -16.05810, -48.00686, False, True, 8, 'Dr. Henrique Brito', 'umsv@orbishealth.com', True),
+    ('Hospital Estadual de Formosa Dr. César Saad Fayad (HEF)', 'Avenida Maestro João Luiz do Espírito Santo, nº 450, Quadra B, Lote 11, Parque Laguna II, Formosa - GO, CEP 73813-120',
+     -15.54767, -47.32044, False, True, 15, 'Dra. Elaine Coutinho', 'hmfor@orbishealth.com', True),
+    ('Hospital Municipal de Cristalina Chaud Salles', 'Avenida Kaled Cosac, nº 540, Centro, Cristalina - GO, CEP 73850-000',
+     -16.76241, -47.61079, False, True, 10, 'Dr. Rodrigo Avelar', 'hmcri@orbishealth.com', True),
+    ('Hospital Municipal Dra. Maria Márcia Gonzaga (Padre Bernardo)', 'Avenida Martins esq. Rua Acre, Vila Maria, Padre Bernardo - GO, CEP 73700-000',
+     -15.15946, -48.28847, False, True, 8, 'Dra. Joana Macedo', 'hmpb@orbishealth.com', True),
+    ('Hospital Estadual de Luziânia (HEL)', 'Avenida Alfredo Nasser, s/n, Parque Estrela Dalva VII, Luziânia - GO, CEP 72820-200',
+     -16.25111, -47.92746, False, True, 25, 'Dr. Sérgio Valadares', 'hel@orbishealth.com', True),
+    ('Hospital Municipal do Jardim Ingá (Luziânia)', 'Avenida Doutor Israel Pinheiro, s/n, Jardim Ingá, Luziânia - GO',
+     -16.14392, -47.96222, False, True, 8, 'Dra. Priscila Antunes', 'hmji@orbishealth.com', True),
+    ('Hospital Municipal de Alexânia', 'Praça Araguaia, nº 15, Centro, Alexânia - GO, CEP 72930-000',
+     -16.08849, -48.49672, False, True, 8, 'Dr. Leandro Queiroz', 'hmalx@orbishealth.com', True),
+    ('Hospital Estadual de Pirenópolis Ernestina Lopes Jaime (HEELJ)', 'Rua dos Pireneus, s/n, Centro, Pirenópolis - GO, CEP 72980-000',
+     -15.84917, -48.95228, False, True, 12, 'Dra. Débora Mendes', 'heelj@orbishealth.com', True),
+    ('Hospital Municipal Nossa Senhora da Penha (Corumbá de Goiás)', 'Avenida Engenheiro Roberto Müller, nº 869, Centro, Corumbá de Goiás - GO, CEP 72960-000',
+     -15.92355, -48.80646, False, True, 6, 'Dr. Vinícius Prado', 'hmcor@orbishealth.com', True),
+    ('Hospital Municipal Jair Paiva (Cocalzinho de Goiás)', 'Avenida São Paulo esq. Rua 3 de Julho, s/n, Centro, Cocalzinho de Goiás - GO, CEP 72975-000',
+     -15.77875, -48.76692, False, True, 6, 'Dra. Tatiane Rocha', 'hmcoc@orbishealth.com', True),
+    ('Hospital Municipal de Cabeceiras', 'Avenida Presidente Juscelino Kubitschek, s/n, Parque São João, Cabeceiras - GO, CEP 73870-000',
+     -15.80497, -46.92308, False, True, 6, 'Dr. Rafael Bittencourt', 'hmcab@orbishealth.com', True),
+    ('Hospital Municipal de Planaltina de Goiás - Materno Infantil Santa Rita de Cássia', 'Quadra 8, nº 115, Setor Leste, Planaltina - GO, CEP 73752-080',
+     -15.46154, -47.60346, False, True, 10, 'Dra. Camila Fontes', 'hmpgo@orbishealth.com', True),
+    ('Hospital Municipal Irmã Fany Duran (Goianésia)', 'Rua 33 esq. Rua 14, nº 416, Centro, Goianésia - GO, CEP 76380-124',
+     -15.32981, -49.11548, False, True, 15, 'Dr. Marcos Vieira', 'hmgoi@orbishealth.com', True),
+    ('Hospital Municipal Santa Efigênia (Niquelândia)', 'Avenida Anhanguera, nº 86, Setor Belo Horizonte, Niquelândia - GO, CEP 76420-000',
+     -14.46684, -48.45839, False, True, 10, 'Dra. Ana Paula Siqueira', 'hmniq@orbishealth.com', True),
+    ('Hospital Municipal Ângela Emília de Jesus (Barro Alto)', 'Avenida/Rua Pedra de Fogo, s/n, Setor Alfredo Sebastião Barbosa, Barro Alto - GO, CEP 76390-000',
+     -14.97819, -48.92588, False, True, 6, 'Dr. Felipe Arantes', 'hmba@orbishealth.com', True),
+    ('Hospital Municipal Gumercindo Barbosa (Alto Paraíso de Goiás)', 'Rua São José Operário, s/n, Paraisinho/Vila Bandeira, Alto Paraíso de Goiás - GO, CEP 73770-000',
+     -14.13729, -47.51985, False, True, 6, 'Dra. Luana Ribeiro', 'hmap@orbishealth.com', True),
+    ('Hospital Municipal de Cavalcante', 'Avenida Elias Jorge Cheim, s/n, Cavalcantinho, Cavalcante - GO, CEP 73790-000',
+     -13.79253, -47.45528, False, True, 5, 'Dr. Jonas Kalunga', 'hmcav@orbishealth.com', True),
+    ("Hospital Municipal Santa Madalena (São João d'Aliança)", "Rua 8 esq. Rua 33, s/n, Setor Label, São João d'Aliança - GO, CEP 73760-000",
+     -14.69980, -47.52141, False, True, 6, 'Dra. Rebeca Lins', 'hmsja@orbishealth.com', True),
+    ('Hospital Municipal de Flores de Goiás', 'Rua 6, s/n, Nova Flores, Flores de Goiás - GO, CEP 73890-000',
+     -14.45770, -47.03957, False, True, 5, 'Dr. Heitor Campos', 'hmfg@orbishealth.com', True),
+    ('Hospital Municipal de Alvorada do Norte', 'Rua 2, s/n, Centro, Alvorada do Norte - GO, CEP 73950-000',
+     -14.48401, -46.51157, False, True, 6, 'Dra. Sabrina Couto', 'hman@orbishealth.com', True),
+    ('Unidade Mista Hospitalar de Simolândia', 'Avenida Pedro Nunes, s/n, Centro, Simolândia - GO, CEP 73930-000',
+     -14.47487, -46.48299, False, True, 4, 'Dr. Otávio Neiva', 'umsim@orbishealth.com', True),
+    ('Unidade Mista Hospitalar Osvaldo Ribeiro de Moura (Vila Boa)', 'Rua Saturnino de Brito, s/n, Jardim Nova Aurora, Vila Boa - GO, CEP 73825-000',
+     -15.03710, -47.05528, False, True, 4, 'Dra. Lorena Pacheco', 'umvb@orbishealth.com', True),
+    # ---- Entorno (Minas Gerais)
+    ('Hospital Municipal Dr. Joaquim Brochado (Unaí)', 'Rua Virgílio Justiniano Ribeiro, nº 1585, Barroca, Unaí - MG, CEP 38616-068',
+     -16.36852, -46.90118, False, True, 20, 'Dr. Augusto Brochado', 'hmunai@orbishealth.com', True),
+    ('Hospital Nossa Senhora Aparecida (Arinos)', 'Rua José Gomes Viana, nº 1200, Centro, Arinos - MG, CEP 38680-000',
+     -15.91475, -46.10668, False, True, 8, 'Dra. Gabriela Amaral', 'hnsa@orbishealth.com', True),
+    ('Unidade Mista de Saúde de Buritis', 'Rua São Domingos, nº 107, Centro, Buritis - MG, CEP 38660-000',
+     -15.61983, -46.42764, False, True, 5, 'Dr. Caio Mesquita', 'umbur@orbishealth.com', True),
 ]
+
+# Nomes antigos -> oficiais atuais: o seed renomeia o hospital já cadastrado
+# em vez de criar um segundo.
+RENOMEADOS = {
+    "Hospital Regional de Águas Lindas de Goiás": "Hospital Estadual de Águas Lindas Ronaldo Ramos Caiado Filho (HEAL)",
+    "Hospital Municipal de Santo Antônio do Descoberto": "Hospital Municipal Dom Luiz Fernandes (Santo Antônio do Descoberto)",
+    "Hospital Público de Cidade Ocidental": "Hospital Municipal de Cidade Ocidental",
+    "Unidade Mista de Saúde de Valparaíso de Goiás": "Hospital Municipal de Valparaíso de Goiás (HMV)",
+    "Hospital Municipal de Formosa": "Hospital Estadual de Formosa Dr. César Saad Fayad (HEF)",
+    "Hospital Municipal de Cristalina": "Hospital Municipal de Cristalina Chaud Salles",
+}
 
 # Hospitais privados de teste que viram públicos (mesmo usuário responsável,
 # mesmas ocorrências) — ficam na mesma região do original.
@@ -348,9 +409,15 @@ def _garantir_hospitais(admin):
     """Cria os hospitais da lista que ainda não existem (pelo nome) e reativa
     os que deveriam estar ativos. Devolve {nome: Hospital} da lista."""
     hospitais = {}
+    antigo_de = {novo: antigo for antigo, novo in RENOMEADOS.items()}
     for nome, end, lat, lng, heli, garagem, cap, resp, email, ativo in HOSPITAIS:
         existente = Hospital.query.filter_by(nome=nome).first()
+        if existente is None and nome in antigo_de:
+            existente = Hospital.query.filter_by(nome=antigo_de[nome]).first()
         if existente:
+            # nome oficial, endereço e posição conferidos: corrige o cadastro antigo
+            existente.nome, existente.endereco = nome, end
+            existente.latitude, existente.longitude, existente.tem_heliponto = lat, lng, heli
             if ativo and not existente.ativo:
                 cadastro_service.alternar_status_hospital(existente.id, admin)
             hospitais[nome] = existente
@@ -420,9 +487,31 @@ def _criar_ocorrencia(socorrista, local_chave, caso, hospital, veiculo, criado_e
     db.session.flush()
 
     paciente = Paciente(ocorrencia_id=o.id, criado_em=criado_em + timedelta(minutes=4))
-    ocorrencia_service._preencher_paciente(paciente, {"documentos_em_maos": rnd.choice(["sim", "nao"]), **caso["paciente"]})
+    ocorrencia_service._preencher_paciente(paciente, {
+        "documentos_em_maos": rnd.choice(["sim", "nao"]),
+        "regioes_lesao": _regioes_do_caso(caso["paciente"]["motivo_chamado"]),
+        **caso["paciente"],
+    })
     db.session.add(paciente)
     return o
+
+
+# regiões do corpo marcadas no boneco 3D, deduzidas do motivo de cada caso
+_PISTAS_REGIOES = [
+    (("torácica", "tórax", "parada", "afogamento", "asmática"), "torax"),
+    (("membro superior esquerdo", "punho esquerdo"), "braco_esquerdo"),
+    (("antebraços",), "braco_direito,braco_esquerdo"),
+    (("perna direita",), "perna_direita"),
+    (("déficit motor", "disartria", "crânio", "cefaleia", "convulsiva", "consciência"), "cabeca"),
+    (("lombar",), "coluna"),
+    (("parto",), "abdome,pelve"),
+    (("flanco",), "abdome"),
+]
+
+
+def _regioes_do_caso(motivo):
+    texto = motivo.lower()
+    return ",".join(regioes for pistas, regioes in _PISTAS_REGIOES if any(p in texto for p in pistas))
 
 
 def _conversa(ocorrencia, socorrista, hospital, caso, inicio, lidas=True):
@@ -821,5 +910,10 @@ if __name__ == "__main__":
         print(f"Banco: {app.config['SQLALCHEMY_DATABASE_URI'].rsplit('@', 1)[-1]}")
         if "--reativar-trajetos" in sys.argv:
             reativar_trajetos()
+        elif "--atualizar-hospitais" in sys.argv:
+            # só a rede de hospitais: cria os que faltam e corrige os existentes
+            _garantir_hospitais(_usuario_admin())
+            db.session.commit()
+            print(f"Hospitais conferidos: {len(HOSPITAIS)} (ativos agora: {Hospital.query.filter_by(ativo=True).count()})")
         else:
             popular()

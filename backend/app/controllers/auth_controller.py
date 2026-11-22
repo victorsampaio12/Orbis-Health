@@ -16,6 +16,12 @@ def index():
     return redirect(url_for("auth.login"))
 
 
+def _tela_login():
+    from app.models.hospital import Hospital
+
+    return render_template("login.html", total_hospitais=Hospital.query.filter_by(ativo=True).count())
+
+
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
@@ -29,13 +35,13 @@ def login():
             usuario = autenticar(email, senha)
         except AuthError as erro:
             flash(erro.message, "error")
-            return render_template("login.html")
+            return _tela_login()
 
         login_user(usuario)
         flash("Login com Sucesso!", "success")
         return redirect(url_for("auth.dashboard"))
 
-    return render_template("login.html")
+    return _tela_login()
 
 
 @auth_bp.route("/dashboard")

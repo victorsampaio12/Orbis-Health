@@ -13,14 +13,14 @@
         </div>
     </div>
     <a class="btn btn-primary historico-exportar" href="{{ url_filtro('pages.historico_emergencias_exportar', pagina=none, por_pagina=none) }}">
-        {{ icons.icon("download", 16) }} Exportar Relatórios
+        {{ icons.icon("download", 16) }} Exportar relatórios
     </a>
 </div>
 
 <form class="historico-filtros" method="GET">
     <div class="historico-filtro historico-filtro-busca">
         {{ icons.icon("search", 16) }}
-        <input type="text" name="busca" value="{{ filtros.busca }}" placeholder="Buscar por ID, socorrista ou local...">
+        <input type="text" name="busca" aria-label="Buscar por ID, socorrista ou local" value="{{ filtros.busca }}" placeholder="Buscar por ID, socorrista ou local...">
     </div>
 
     <div class="historico-filtro">
@@ -28,7 +28,7 @@
         <select id="historico-status" name="status" onchange="this.form.submit()">
             <option value="">Todos</option>
             <option value="pendente" {{ "selected" if filtros.status == "pendente" }}>Pendente</option>
-            <option value="atendimento" {{ "selected" if filtros.status == "atendimento" }}>Em Atendimento</option>
+            <option value="atendimento" {{ "selected" if filtros.status == "atendimento" }}>Em atendimento</option>
             <option value="finalizada" {{ "selected" if filtros.status == "finalizada" }}>Finalizada</option>
         </select>
     </div>
@@ -37,9 +37,9 @@
         <label>Período</label>
         <div class="historico-periodo">
             {{ icons.icon("calendar", 15) }}
-            <input type="date" name="data_inicio" value="{{ filtros.data_inicio or '' }}">
+            <input type="date" name="data_inicio" aria-label="Data inicial" value="{{ filtros.data_inicio or '' }}">
             <span>–</span>
-            <input type="date" name="data_fim" value="{{ filtros.data_fim or '' }}">
+            <input type="date" name="data_fim" aria-label="Data final" value="{{ filtros.data_fim or '' }}">
         </div>
     </div>
 
@@ -125,7 +125,7 @@
     </span>
 
     <div class="historico-paginacao-controles">
-        <select class="historico-por-pagina" onchange="location.href=this.value">
+        <select class="historico-por-pagina" aria-label="Itens por página" onchange="location.href=this.value">
             {% for opcao in (8, 16, 24) %}
             <option value="{{ url_filtro(por_pagina=opcao, pagina=1) }}" {{ "selected" if resultado.por_pagina == opcao }}>
                 {{ opcao }} por página

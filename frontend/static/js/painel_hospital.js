@@ -50,34 +50,54 @@ function iniciarPainelHospital(painel, config) {
     }
 
     // ----------------------------------------------------------------- mapa
-    const mapa = L.map("mapa-emergencias").setView(hospital.posicao || CENTRO_PADRAO, 12);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; colaboradores do OpenStreetMap",
-        maxZoom: 19,
-    }).addTo(mapa);
+    const mapa = L.map("mapa-emergencias", { zoomControl: false }).setView(hospital.posicao || CENTRO_PADRAO, 12);
+    L.control.zoom({ position: "bottomright" }).addTo(mapa);
+    // a lista flutua à esquerda e os painéis à direita: o enquadramento desconta
+    const largo = () => window.innerWidth > 1100;
+    const folgas = (extra = {}) => (largo()
+        ? { paddingTopLeft: [500, 70], paddingBottomRight: [selecionadaId !== null ? 380 : 70, 70], ...extra }
+        : { padding: [60, 60], ...extra });
+    const codigo = (id) => `EMG-${String(id).padStart(4, "0")}`;
+    window.OrbisIcones.camadaBase().addTo(mapa);
 
     if (hospital.posicao) {
-        L.marker(hospital.posicao, { icon: window.OrbisIcones.badge("hospital", "#1a1a1a", 36) })
+        L.marker(hospital.posicao, { icon: window.OrbisIcones.hospital(40), title: hospital.nome })
             .addTo(mapa)
-            .bindPopup(hospital.nome);
+            .bindPopup(() => {
+                // textContent: o nome vem do cadastro e nunca é interpretado como HTML
+                const el = document.createElement("strong");
+                el.textContent = hospital.nome;
+                return el;
+            });
+    }
+
+    function rotuloViatura(e) {
+        const eta = e.tempo_estimado_min != null ? `<span>${Math.max(1, Math.round(e.tempo_estimado_min))} min</span>` : "";
+        return `<b>${codigo(e.id)}</b>${eta}`;
     }
 
     const porId = {};
+    let selecionadaId = null;
     emergencias.forEach((e) => {
         const st = { dados: e, card: document.querySelector(`.emg-card[data-id="${e.id}"]`), marcador: null };
         porId[e.id] = st;
         if (!e.ativa) return;
 
         if (e.rota_geometria) {
-            L.geoJSON(e.rota_geometria, {
-                style: { color: "#1a1a1a", weight: 3, opacity: 0.75, dashArray: "2 8", lineCap: "round" },
-            }).addTo(mapa);
+            L.geoJSON(e.rota_geometria, { style: { color: "#ffffff", weight: 8, opacity: 0.9, lineCap: "round" } }).addTo(mapa);
+            L.geoJSON(e.rota_geometria, { style: { color: "#8c2b2b", weight: 4, opacity: 0.9, lineCap: "round" } }).addTo(mapa);
+            // partículas fluindo no sentido do destino (CSS .rota-fluxo)
+            L.geoJSON(e.rota_geometria, { style: { color: "#ffffff", weight: 2, opacity: 0.95, dashArray: "1 13", lineCap: "round", className: "rota-fluxo" }, interactive: false }).addTo(mapa);
         }
         if (e.posicao) {
             st.marcador = L.marker(e.posicao, {
-                icon: window.OrbisIcones.badge(e.veiculo === "helicoptero" ? "helicoptero" : "ambulancia", "#8c2b2b", 38),
+                icon: window.OrbisIcones.veiculo(e.veiculo === "helicoptero" ? "helicoptero" : "ambulancia",
+                    { tamanho: 54, parado: e.trajeto_estado !== "em_andamento" }),
+                title: `Viatura da emergência EMG-${String(e.id).padStart(4, "0")}`,
             }).addTo(mapa);
+            st.marcador.bindTooltip(rotuloViatura(e), { permanent: true, direction: "top", offset: [0, -26], className: "rotulo-mapa" });
             st.marcador.on("click", () => selecionar(e.id));
+            if (hospital.posicao) setTimeout(() => window.OrbisIcones.apontar(st.marcador, hospital.posicao), 0);
         }
     });
 
@@ -85,13 +105,52 @@ function iniciarPainelHospital(painel, config) {
         const pontos = [];
         if (hospital.posicao) pontos.push(hospital.posicao);
         Object.values(porId).forEach((st) => st.marcador && pontos.push(st.marcador.getLatLng()));
-        if (pontos.length > 1) mapa.fitBounds(pontos, { padding: [70, 70] });
+        if (pontos.length > 1) mapa.fitBounds(pontos, folgas());
     }
     enquadrarTudo();
 
     // -------------------------------------------------------------- painéis
     const paineisEl = document.getElementById("emg-paineis");
-    let selecionadaId = null;
+    let painelVeiculoCache = null;
+
+    // viatura em 3D + previsão grande (criado uma vez por seleção — o visor 3D
+    // não é recriado a cada posição recebida)
+    function painelVeiculo(e) {
+        if (painelVeiculoCache && painelVeiculoCache.dataset.id === String(e.id)) {
+            atualizarPainelVeiculo(e);
+            return painelVeiculoCache;
+        }
+        if (painelVeiculoCache && window.Orbis3D) window.Orbis3D.descartar(painelVeiculoCache);
+        const sec = criar("section", "emg-painel emg-painel-veiculo");
+        sec.dataset.id = e.id;
+        const visor = criar("div", "visor visor-veiculo emg-visor");
+        Object.assign(visor.dataset, {
+            "3d": "veiculo", tipo: e.veiculo === "helicoptero" ? "helicoptero" : "ambulancia",
+            movimento: e.trajeto_estado === "em_andamento" ? "1" : "0", girar: "1", interativo: "1",
+            modelo: (config.urlModelos || "") + (e.veiculo === "helicoptero" ? "helicoptero" : "ambulancia") + ".glb",
+            azimute: "40", elevacao: "14", folga: "0.9",
+        });
+        sec.appendChild(visor);
+        const info = criar("div", "emg-painel-veiculo-info");
+        info.appendChild(criar("span", "emg-painel-codigo", codigo(e.id)));
+        const eta = criar("strong", "emg-painel-eta");
+        info.appendChild(eta);
+        info.appendChild(criar("small", "emg-painel-eta-rotulo", "até a chegada"));
+        sec.appendChild(info);
+        painelVeiculoCache = sec;
+        atualizarPainelVeiculo(e);
+        const iniciar3d = () => window.Orbis3D && window.Orbis3D.iniciar(sec);
+        if (window.Orbis3D) iniciar3d(); else window.addEventListener("orbis3d:pronto", iniciar3d, { once: true });
+        return sec;
+    }
+    function atualizarPainelVeiculo(e) {
+        const visor = painelVeiculoCache.querySelector(".emg-visor");
+        if (visor) visor.dataset.movimento = e.trajeto_estado === "em_andamento" && !e.chegada_em && !e.finalizado_em ? "1" : "0";
+        const eta = painelVeiculoCache.querySelector(".emg-painel-eta");
+        if (e.finalizado_em || e.chegada_em) eta.textContent = "Chegou";
+        else if (e.tempo_estimado_min != null) eta.textContent = `${Math.max(1, Math.round(e.tempo_estimado_min))} min`;
+        else eta.textContent = "—";
+    }
 
     function painelContato(e) {
         const sec = criar("section", "emg-painel");
@@ -124,7 +183,7 @@ function iniciarPainelHospital(painel, config) {
         let previsao;
         if (e.finalizado_em) previsao = formatar(e.finalizado_em);
         else if (e.chegada_em) previsao = "Chegou às " + formatar(e.chegada_em, "hora");
-        else if (e.tempo_estimado_min != null) previsao = "Previsão ≈ " + Number(e.tempo_estimado_min).toFixed(1) + " min";
+        else if (e.tempo_estimado_min != null) previsao = "Previsão ≈ " + Math.max(1, Math.round(Number(e.tempo_estimado_min))) + " min";
         else previsao = "—";
 
         [
@@ -156,6 +215,7 @@ function iniciarPainelHospital(painel, config) {
             return;
         }
         const e = porId[selecionadaId].dados;
+        paineisEl.appendChild(painelVeiculo(e));
         paineisEl.appendChild(painelContato(e));
         paineisEl.appendChild(painelRota(e));
         paineisEl.appendChild(painelProntuario(e));
@@ -170,7 +230,9 @@ function iniciarPainelHospital(painel, config) {
         st.card.scrollIntoView({ block: "nearest", behavior: "smooth" });
 
         if (st.marcador && hospital.posicao) {
-            mapa.fitBounds([st.marcador.getLatLng(), hospital.posicao], { padding: [90, 90], maxZoom: 16 });
+            renderizarPaineis();
+            mapa.fitBounds([st.marcador.getLatLng(), hospital.posicao], folgas({ maxZoom: 16 }));
+            return;
         }
         renderizarPaineis();
     }
@@ -178,6 +240,8 @@ function iniciarPainelHospital(painel, config) {
     function deselecionar() {
         if (selecionadaId !== null) porId[selecionadaId].card.classList.remove("emg-card-selecionado");
         selecionadaId = null;
+        if (painelVeiculoCache && window.Orbis3D) window.Orbis3D.descartar(painelVeiculoCache);
+        painelVeiculoCache = null;
         renderizarPaineis();
     }
 
@@ -210,11 +274,15 @@ function iniciarPainelHospital(painel, config) {
         const st = porId[d.ocorrencia_id];
         if (!st) return;
 
+        st.dados.tempo_estimado_min = d.tempo_estimado_min;
+        st.dados.trajeto_estado = "em_andamento";
         if (st.marcador) {
-            st.marcador.setLatLng([d.lat, d.lng]);
+            window.OrbisIcones.mover(st.marcador, [d.lat, d.lng]);
+            if (st.marcador.getTooltip()) st.marcador.setTooltipContent(rotuloViatura(st.dados));
         } else if (st.dados.ativa) {
             st.marcador = L.marker([d.lat, d.lng], {
                 icon: window.OrbisIcones.badge(st.dados.veiculo === "helicoptero" ? "helicoptero" : "ambulancia", "#8c2b2b", 38),
+                title: `Viatura da emergência EMG-${String(d.ocorrencia_id).padStart(4, "0")}`,
             }).addTo(mapa);
             st.marcador.on("click", () => selecionar(d.ocorrencia_id));
         }
@@ -225,14 +293,14 @@ function iniciarPainelHospital(painel, config) {
 
         st.dados.tempo_estimado_min = d.tempo_estimado_min;
         const eta = st.card.querySelector(".emg-eta");
-        if (eta && d.tempo_estimado_min != null) eta.textContent = "≈ " + Number(d.tempo_estimado_min).toFixed(1) + " min";
+        if (eta && d.tempo_estimado_min != null) eta.textContent = "≈ " + Math.max(1, Math.round(Number(d.tempo_estimado_min))) + " min";
 
-        // Primeira posição depois de "Iniciar Trajeto": Pendente -> Em Atendimento.
+        // Primeira posição depois de "Iniciar Trajeto": Pendente -> Em atendimento.
         if (st.dados.status === "pendente" && pct > 0) {
             st.dados.status = "atendimento";
             const pill = st.card.querySelector(".emg-status");
             pill.className = "emg-status emg-status-atendimento";
-            pill.textContent = "Em Atendimento";
+            pill.textContent = "Em atendimento";
             st.dados.saida_em = st.dados.saida_em || new Date().toISOString();
         }
         if (selecionadaId === d.ocorrencia_id) renderizarPaineis();

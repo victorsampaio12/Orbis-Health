@@ -1,10 +1,16 @@
 {% extends "app_base.html" %}
+{% import "_icons.html" as icons %}
 
-{% block title %}{{ "Editar" if socorrista else "Novo" }} Socorrista - OrbisHealth{% endblock %}
+{% block title %}{{ "Editar" if socorrista else "Novo" }} socorrista - OrbisHealth{% endblock %}
 
 {% block app_content %}
 <div class="admin-page admin-page-largo">
-    <h1>{{ "Editar socorrista" if socorrista else "Novo socorrista" }}</h1>
+    <header class="admin-page-header">
+        <div>
+            <a class="link-voltar" href="{{ url_for('admin.listar_socorristas') }}">{{ icons.icon("chevron-left", 16) }} Voltar à lista</a>
+            <h1>{{ "Editar socorrista" if socorrista else "Novo socorrista" }}</h1>
+        </div>
+    </header>
 
     <form class="admin-form admin-form-largo" method="POST">
         <fieldset>

@@ -6,13 +6,13 @@
  * desatualizada a partir de um cache seria perigoso. Só o "app shell"
  * (CSS/JS/ícones próprios) é cacheado; tudo mais vai direto pra rede.
  */
-const CACHE_NAME = "orbishealth-shell-v3";
+const CACHE_NAME = "orbishealth-shell-v22";
 const APP_SHELL = [
-    "/static/css/style.css",
-    "/static/css/acabamento.css",
+    "/static/css/app.css",
     "/static/js/flash.js",
     "/static/js/sidebar.js",
     "/static/js/acabamento.js",
+    "/static/js/orbis.js",
     "/static/img/icon-192.png",
     "/static/img/icon-512.png",
     "/static/manifest.webmanifest",

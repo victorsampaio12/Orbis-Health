@@ -24,10 +24,11 @@ class Ocorrencia(db.Model):
     __tablename__ = "ocorrencia"
 
     id = db.Column(db.Integer, primary_key=True)
+    # index: painel, histórico e inbox filtram por hospital ou por socorrista
     socorrista_id = db.Column(
-        db.Integer, db.ForeignKey("socorrista.id"), nullable=False
+        db.Integer, db.ForeignKey("socorrista.id"), nullable=False, index=True
     )
-    hospital_id = db.Column(db.Integer, db.ForeignKey("hospital.id"), nullable=True)
+    hospital_id = db.Column(db.Integer, db.ForeignKey("hospital.id"), nullable=True, index=True)
     # Snapshot da posição do hospital no momento em que ele foi selecionado
     # como destino (RN-004/005). Não usamos hospital.latitude/longitude
     # diretamente em nenhum cálculo de rota/chegada porque, se o endereço do

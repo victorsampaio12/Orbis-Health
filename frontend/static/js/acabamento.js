@@ -1,5 +1,5 @@
 /**
- * Acabamento de interface (par do acabamento.css). Só comportamento visual:
+ * Acabamento de interface (estilos em app.css). Só comportamento visual:
  * nenhum dado é alterado e nenhum fluxo muda.
  *
  * - Botão de envio mostra "carregando" e não aceita clique duplo.
@@ -34,6 +34,14 @@
             el.removeAttribute("aria-busy");
         });
     });
+
+    // --------------------------------------- saudação pelo horário (topo)
+    const saudacao = document.getElementById("topbar-saudacao");
+    if (saudacao) {
+        const h = new Date().getHours();
+        const periodo = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
+        saudacao.firstChild.textContent = `${periodo}, `;
+    }
 
     // ------------------------------------------------------- avisos
     document.addEventListener("click", (evento) => {

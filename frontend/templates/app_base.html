@@ -1,138 +1,170 @@
 {% extends "base.html" %}
 {% import "_icons.html" as icons %}
+{% import "_marca.html" as marca %}
 
 {% block content %}
-<div class="app-shell">
+{% set papel = current_user.papel.value %}
+{% set secao = {"admin": "Administração", "socorrista": "Atendimento", "hospital": "Pronto-socorro"}[papel] %}
+{# celular (≤ 760 px): o socorrista vê a web com a cara do app mobile — cabeçalho
+   próprio (.cel-cab) e o menu vira uma folha que abre pelo avatar (seção 18 do app.css) #}
+<div class="app-shell{{ ' cel-app' if papel == 'socorrista' }}">
     <aside class="app-sidebar">
         <div class="sidebar-header">
             <a class="sidebar-logo" href="{{ url_for('auth.dashboard') }}">
-                <span class="sidebar-logo-icon">+</span>
-                <span class="sidebar-logo-text">OrbisHealth</span>
+                <span class="sidebar-logo-icon">{{ marca.marca(22) }}</span>
+                <span class="sidebar-logo-text">Orbis<em>Health</em></span>
             </a>
             <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-label="Recolher menu"
                     data-url="{{ url_for('pages.preferencia_menu') }}">
-                {{ icons.icon("chevrons-left") }}
+                {{ icons.icon("chevrons-left", 16) }}
             </button>
         </div>
 
+        <button type="button" class="sidebar-busca" data-abrir-paleta aria-label="Ir para uma tela (Ctrl+K)">
+            {{ icons.icon("search", 15) }} <span>Ir para…</span> <kbd>Ctrl K</kbd>
+        </button>
+
         <nav class="sidebar-menu">
-            <span class="sidebar-section-label">Menu</span>
+            <span class="sidebar-section-label">{{ secao }}</span>
 
             {% set hospital_endpoints = ['admin.listar_hospitais', 'admin.novo_hospital', 'admin.editar_hospital', 'admin.status_hospital'] %}
             {% set socorrista_endpoints = ['admin.listar_socorristas', 'admin.novo_socorrista', 'admin.editar_socorrista', 'admin.status_socorrista'] %}
             {% set admins_endpoints = ['admin.listar_admins', 'admin.novo_admin', 'admin.editar_admin', 'admin.status_admin', 'admin.excluir_admin'] %}
-            {% set cadastro_endpoints = ['admin.index'] + hospital_endpoints + socorrista_endpoints + admins_endpoints %}
 
-            {% if current_user.papel.value == "admin" %}
+            {% if papel == "admin" %}
                 <a class="sidebar-link {{ 'active' if request.endpoint == 'auth.dashboard' else '' }}"
                    href="{{ url_for('auth.dashboard') }}">
-                    {{ icons.icon("layout-dashboard") }} <span>Dashboard</span>
+                    {{ icons.icon("layout-dashboard", 18) }} <span>Dashboard</span>
                 </a>
-
-                <a class="sidebar-subgroup-label {{ 'active' if request.endpoint == 'admin.index' else '' }}"
+                <a class="sidebar-link {{ 'active' if request.endpoint == 'admin.index' else '' }}"
                    href="{{ url_for('admin.index') }}">
-                    {{ icons.icon("file-plus-2") }} <span>Cadastro</span>
+                    {{ icons.icon("file-plus-2", 18) }} <span>Cadastro</span>
                 </a>
-                <a class="sidebar-sublink {{ 'active' if request.endpoint in hospital_endpoints else '' }}"
-                   href="{{ url_for('admin.listar_hospitais') }}">
-                    {{ icons.icon("building-2", size=16) }} <span>Hospitais</span>
-                </a>
-                <a class="sidebar-sublink {{ 'active' if request.endpoint in socorrista_endpoints else '' }}"
-                   href="{{ url_for('admin.listar_socorristas') }}">
-                    {{ icons.icon("siren", size=16) }} <span>Socorristas</span>
-                </a>
-                <a class="sidebar-sublink {{ 'active' if request.endpoint in admins_endpoints else '' }}"
-                   href="{{ url_for('admin.listar_admins') }}">
-                    {{ icons.icon("shield-check", size=16) }} <span>Administradores</span>
-                </a>
-            {% elif current_user.papel.value == "socorrista" %}
+                <div class="sidebar-grupo">
+                    <a class="sidebar-sublink {{ 'active' if request.endpoint in hospital_endpoints else '' }}"
+                       href="{{ url_for('admin.listar_hospitais') }}">
+                        {{ icons.icon("building-2", 16) }} <span>Hospitais</span>
+                    </a>
+                    <a class="sidebar-sublink {{ 'active' if request.endpoint in socorrista_endpoints else '' }}"
+                       href="{{ url_for('admin.listar_socorristas') }}">
+                        {{ icons.icon("siren", 16) }} <span>Socorristas</span>
+                    </a>
+                    <a class="sidebar-sublink {{ 'active' if request.endpoint in admins_endpoints else '' }}"
+                       href="{{ url_for('admin.listar_admins') }}">
+                        {{ icons.icon("shield-check", 16) }} <span>Administradores</span>
+                    </a>
+                </div>
+            {% elif papel == "socorrista" %}
                 {% if ocorrencia_ativa_sidebar %}
                     {% set pacientes_endpoints = ['ocorrencia.pacientes', 'ocorrencia.novo_paciente', 'ocorrencia.editar_paciente'] %}
                     <a class="sidebar-link {{ 'active' if request.endpoint == 'ocorrencia.ver' else '' }}"
                        href="{{ url_for('ocorrencia.ver', ocorrencia_id=ocorrencia_ativa_sidebar.id) }}">
-                        {{ icons.icon("activity") }} <span>Ocorrência Ativa</span>
+                        {{ icons.icon("activity", 18) }} <span>Ocorrência ativa</span>
+                        <i class="sidebar-vivo" title="Em andamento"></i>
                     </a>
                     <a class="sidebar-link {{ 'active' if request.endpoint in pacientes_endpoints else '' }}"
                        href="{{ url_for('ocorrencia.pacientes', ocorrencia_id=ocorrencia_ativa_sidebar.id) }}">
-                        {{ icons.icon("user-round") }} <span>Paciente</span>
+                        {{ icons.icon("user-round", 18) }} <span>Paciente</span>
                     </a>
                     {% if ocorrencia_ativa_sidebar.status.value == "aberta" %}
                         <a class="sidebar-link {{ 'active' if request.endpoint == 'ocorrencia.hospitais' else '' }}"
                            href="{{ url_for('ocorrencia.hospitais', ocorrencia_id=ocorrencia_ativa_sidebar.id) }}">
-                            {{ icons.icon("building-2") }} <span>Lista de Hospitais</span>
+                            {{ icons.icon("building-2", 18) }} <span>Lista de Hospitais</span>
                         </a>
                     {% endif %}
                 {% else %}
                     <a class="sidebar-link {{ 'active' if request.endpoint == 'ocorrencia.nova' else '' }}"
                        href="{{ url_for('ocorrencia.nova') }}">
-                        {{ icons.icon("file-plus-2") }} <span>Criar Ocorrência</span>
+                        {{ icons.icon("file-plus-2", 18) }} <span>Criar Ocorrência</span>
                     </a>
                 {% endif %}
                 <a class="sidebar-link {{ 'active' if request.endpoint and request.endpoint.startswith('inbox.') else '' }}"
                    href="{{ url_for('inbox.index') }}">
-                    {{ icons.icon("inbox") }} <span>Inbox</span>
-                    {% if inbox_nao_lidas %}<span class="sidebar-badge">{{ inbox_nao_lidas }}</span>{% endif %}
+                    {{ icons.icon("inbox", 18) }} <span>Inbox</span>
+                    {% if inbox_nao_lidas %}<b class="sidebar-badge">{{ inbox_nao_lidas }}</b>{% endif %}
                 </a>
-            {% elif current_user.papel.value == "hospital" %}
+            {% elif papel == "hospital" %}
                 <a class="sidebar-link {{ 'active' if request.endpoint == 'auth.dashboard' else '' }}"
                    href="{{ url_for('auth.dashboard') }}">
-                    {{ icons.icon("clipboard-list") }} <span>Lista de emergência</span>
+                    {{ icons.icon("clipboard-list", 18) }} <span>Lista de emergência</span>
                 </a>
                 <a class="sidebar-link {{ 'active' if request.endpoint == 'pages.historico_emergencias' else '' }}"
                    href="{{ url_for('pages.historico_emergencias') }}">
-                    {{ icons.icon("history") }} <span>Histórico de emergências</span>
+                    {{ icons.icon("history", 18) }} <span>Histórico</span>
                 </a>
                 <a class="sidebar-link {{ 'active' if request.endpoint and request.endpoint.startswith('inbox.') else '' }}"
                    href="{{ url_for('inbox.index') }}">
-                    {{ icons.icon("inbox") }} <span>Inbox</span>
-                    {% if inbox_nao_lidas %}<span class="sidebar-badge">{{ inbox_nao_lidas }}</span>{% endif %}
+                    {{ icons.icon("inbox", 18) }} <span>Inbox</span>
+                    {% if inbox_nao_lidas %}<b class="sidebar-badge">{{ inbox_nao_lidas }}</b>{% endif %}
                 </a>
             {% endif %}
         </nav>
 
         <div class="sidebar-footer">
-            <span class="sidebar-section-label">Outros</span>
-
-            <div class="sidebar-subgroup-label">
-                {{ icons.icon("settings") }} <span>Configurações</span>
-            </div>
-            <a class="sidebar-sublink {{ 'active' if request.endpoint == 'pages.perfil' else '' }}"
+            <span class="sidebar-section-label">Configurações</span>
+            <a class="sidebar-link {{ 'active' if request.endpoint == 'pages.perfil' else '' }}"
                href="{{ url_for('pages.perfil') }}">
-                {{ icons.icon("user", size=16) }} <span>Perfil</span>
+                {{ icons.icon("user", 18) }} <span>Perfil</span>
             </a>
-            <a class="sidebar-sublink {{ 'active' if request.endpoint == 'pages.preferencias' else '' }}"
+            <a class="sidebar-link {{ 'active' if request.endpoint == 'pages.preferencias' else '' }}"
                href="{{ url_for('pages.preferencias') }}">
-                {{ icons.icon("sliders-horizontal", size=16) }} <span>Preferências</span>
+                {{ icons.icon("sliders-horizontal", 18) }} <span>Preferências</span>
             </a>
 
-            <a class="sidebar-link" href="{{ url_for('auth.logout') }}">
-                {{ icons.icon("log-out") }} <span>Logout</span>
-            </a>
+            <div class="sidebar-usuario">
+                <span class="avatar">{{ current_user.nome | iniciais }}</span>
+                <div class="sidebar-usuario-info">
+                    <strong>{{ current_user.nome }}</strong>
+                    <small>{{ {"admin": "Administrador", "socorrista": "Socorrista", "hospital": "Hospital"}[papel] }}</small>
+                </div>
+                <a class="sidebar-sair" href="{{ url_for('auth.logout') }}" title="Sair">
+                    {{ icons.icon("log-out", 16) }}<span>Logout</span>
+                </a>
+            </div>
         </div>
     </aside>
 
     <div class="app-main">
-        <header class="app-topbar">
-            <div class="topbar-search">
-                <span class="topbar-search-icon">{{ icons.icon("search", size=16) }}</span>
-                <input type="text" placeholder="Search" disabled>
-                <span class="topbar-search-mic">{{ icons.icon("mic", size=16) }}</span>
+        {% if papel == "socorrista" %}
+        {# Blocos do cabeçalho do celular: cada tela define título, subtítulo e para onde o "voltar" leva. #}
+        {% if false %}{% block cel_voltar %}{% endblock %}{% block cel_sub %}{% endblock %}{% endif %}
+        {% block cel_cabecalho %}
+        {% set cel_voltar_url = self.cel_voltar() | trim %}
+        {% set cel_sub_texto = self.cel_sub() | trim %}
+        <header class="cel-cab">
+            {% if cel_voltar_url %}
+            <a class="cel-botao-icone cel-botao-claro" href="{{ cel_voltar_url }}" aria-label="Voltar">{{ icons.icon("chevron-left", 20) }}</a>
+            {% endif %}
+            <div class="cel-cab-texto">
+                <strong>{% block cel_titulo %}{{ self.migalha() | trim }}{% endblock %}</strong>
+                {% if cel_sub_texto %}<small>{{ cel_sub_texto }}</small>{% endif %}
             </div>
+            <button type="button" class="cel-conta" data-cel-menu aria-label="Conta e menu">{{ current_user.nome | iniciais }}</button>
+        </header>
+        {% endblock %}
+        {% endif %}
+        <header class="app-topbar">
+            <nav class="migalha" aria-label="Você está em">
+                <span>{{ secao }}</span>
+                {{ icons.icon("chevron-right", 14) }}
+                <strong>{% block migalha %}{{ self.title() | replace(" - OrbisHealth", "") }}{% endblock %}</strong>
+            </nav>
 
             <div class="topbar-right">
-                {% if current_user.papel.value == "hospital" and current_user.hospital %}
-                    <span class="topbar-chip">{{ current_user.hospital.nome }}</span>
+                {% if papel == "hospital" and current_user.hospital %}
+                    <span class="topbar-chip topbar-chip-hospital">{{ icons.icon("building-2", 14) }} {{ current_user.hospital.nome }}</span>
                 {% endif %}
-                <span class="topbar-chip" id="topbar-date"></span>
-                <span class="topbar-chip" id="topbar-time"></span>
-
-                <div class="topbar-profile">
-                    <div class="topbar-avatar">{{ current_user.nome | iniciais }}</div>
-                    <div class="topbar-profile-info">
-                        <strong>{{ current_user.nome }}</strong>
-                        <small>{{ current_user.papel.value }}</small>
-                    </div>
-                </div>
+                <span class="topbar-conexao" title="Conectado à central — dados em tempo real"><span class="ao-vivo"></span> Tempo real</span>
+                {% if papel in ["socorrista", "hospital"] %}
+                <a class="topbar-sino{{ ' com-aviso' if inbox_nao_lidas }}" href="{{ url_for('inbox.index') }}" title="Mensagens">
+                    {{ icons.icon("inbox", 17) }}
+                    {% if inbox_nao_lidas %}<b>{{ inbox_nao_lidas }}</b><small>{{ "nova" if inbox_nao_lidas == 1 else "novas" }}</small>{% endif %}
+                </a>
+                {% endif %}
+                <span class="topbar-relogio">
+                    <span id="topbar-date"></span>
+                    <strong id="topbar-time"></strong>
+                </span>
             </div>
         </header>
 
@@ -141,4 +173,5 @@
         </main>
     </div>
 </div>
+{% if papel == "socorrista" %}<div class="cel-veu" data-cel-menu aria-hidden="true"></div>{% endif %}
 {% endblock %}

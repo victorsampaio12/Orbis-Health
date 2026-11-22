@@ -1,0 +1,14 @@
+== sistema: Python 3.12.16, x86_64
+== pip install: 14.1 s
+INFO  [alembic.runtime.migration] Running upgrade 5559a20b65a8 -> b3f1c2d4e5a6, anexos (fotos) do paciente
+Usuário admin criado com sucesso:
+  email: admin@orbishealth.com
+  senha: Admin@123
+Pronto. Senha de todas as contas novas: Senha@123
+  Coordenação (admin): coordenacao@orbishealth.com
+  Socorristas livres:  camila.ferreira@orbishealth.com, rodrigo.teles@orbishealth.com, vanessa.lopes@orbishealth.com, gabriel.siqueira@orbishealth.com, fernanda.ribeiro@orbishealth.com, lucas.andrade@orbishealth.com
+== banco pronto: 20.3 s
+== servidor no ar em 0.6 s
+== login do admin: OK
+== tela de hospitais: 200 - carregou
+== INSTALACAO_OK

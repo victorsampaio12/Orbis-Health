@@ -27,7 +27,7 @@ def _query_base(hospital, filtros):
     if busca:
         codigo = busca.upper().removeprefix("EMG-").lstrip("0")
         condicoes = [Usuario.nome.ilike(f"%{busca}%"), Ocorrencia.local.ilike(f"%{busca}%")]
-        if codigo.isdigit():
+        if codigo.isascii() and codigo.isdigit() and len(codigo) < 10:
             condicoes.append(Ocorrencia.id == int(codigo))
         from sqlalchemy import or_
 
@@ -121,6 +121,13 @@ def paginas_visiveis(pagina, total_paginas):
     return resultado
 
 
+def _celula_segura(valor):
+    """Texto digitado por usuários começando com = + - @ seria executado como
+    fórmula pelo Excel ao abrir o CSV; o apóstrofo faz virar texto puro."""
+    valor = "" if valor is None else str(valor)
+    return "'" + valor if valor[:1] in ("=", "+", "-", "@", "\t", "\r") else valor
+
+
 def exportar_csv(hospital, filtros):
     """Mesmos filtros da listagem, mas sem paginação — exporta tudo que bate."""
     ocorrencias = _query_base(hospital, filtros).order_by(Ocorrencia.criado_em.desc()).all()
@@ -137,9 +144,9 @@ def exportar_csv(hospital, filtros):
                 f"EMG-{linha['id']:04d}",
                 linha["status_rotulo"],
                 linha["veiculo_rotulo"],
-                linha["socorrista_nome"],
-                linha["local"],
-                linha["hospital_nome"],
+                _celula_segura(linha["socorrista_nome"]),
+                _celula_segura(linha["local"]),
+                _celula_segura(linha["hospital_nome"]),
                 fuso.utc_para_local(linha["criado_em"]).strftime("%d/%m/%Y %H:%M"),
                 fuso.utc_para_local(linha["finalizado_em"]).strftime("%d/%m/%Y %H:%M")
                 if linha["finalizado_em"] else "",

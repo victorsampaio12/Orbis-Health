@@ -107,15 +107,23 @@ def gravar(paciente, preparadas, usuario):
 
 
 def remover(paciente, ids):
-    """Remove os anexos indicados (só os deste paciente) do banco e do disco."""
+    """Tira do paciente os anexos indicados (só os dele), sem commit, e
+    devolve os arquivos a apagar. Quem chama apaga com apagar_arquivos()
+    DEPOIS do commit — se a transação falhar, a foto continua no disco."""
     ids = {int(i) for i in ids if str(i).isdigit()}
+    arquivos = []
     for anexo in [a for a in paciente.anexos if a.id in ids]:
-        for relativo in (anexo.arquivo, _caminho_miniatura(anexo.arquivo)):
-            try:
-                os.remove(os.path.join(_pasta_raiz(), relativo))
-            except FileNotFoundError:
-                pass
+        arquivos += [anexo.arquivo, _caminho_miniatura(anexo.arquivo)]
         paciente.anexos.remove(anexo)
+    return arquivos
+
+
+def apagar_arquivos(relativos):
+    for relativo in relativos:
+        try:
+            os.remove(os.path.join(_pasta_raiz(), relativo))
+        except FileNotFoundError:
+            pass
 
 
 def caminho_absoluto(anexo, miniatura=False):

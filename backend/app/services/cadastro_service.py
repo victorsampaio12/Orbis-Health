@@ -22,6 +22,24 @@ class CadastroError(Exception):
         super().__init__(message)
 
 
+# Tamanho das colunas no banco: acima disso o PostgreSQL recusaria o INSERT
+# com erro 500; aqui vira uma mensagem no formulário.
+TAMANHO_MAXIMO = {
+    "nome": (150, "nome"),
+    "email": (150, "e-mail"),
+    "endereco": (255, "endereço"),
+    "responsavel_nome": (150, "nome do responsável"),
+    "matricula": (50, "matrícula"),
+    "telefone": (30, "telefone"),
+}
+
+
+def _validar_tamanhos(dados):
+    for campo, (limite, rotulo) in TAMANHO_MAXIMO.items():
+        if len((dados.get(campo) or "").strip()) > limite:
+            raise CadastroError(f"O campo {rotulo} aceita no máximo {limite} caracteres.", campo=campo)
+
+
 def _hash_senha(senha):
     return bcrypt.hashpw(senha.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
@@ -103,6 +121,7 @@ def obter_hospital(hospital_id):
 
 
 def criar_hospital(dados, admin_atual):
+    _validar_tamanhos(dados)
     nome = (dados.get("nome") or "").strip()
     endereco = (dados.get("endereco") or "").strip()
     tem_heliponto = dados.get("tem_heliponto") == "on"
@@ -172,6 +191,7 @@ def editar_hospital(hospital_id, dados, admin_atual):
     hospital = obter_hospital(hospital_id)
     usuario = hospital.usuario
 
+    _validar_tamanhos(dados)
     nome = (dados.get("nome") or "").strip()
     endereco = (dados.get("endereco") or "").strip()
     tem_heliponto = dados.get("tem_heliponto") == "on"
@@ -242,18 +262,30 @@ def alternar_status_hospital(hospital_id, admin_atual):
 def _validar_capacidade_maxima(capacidade_raw):
     if not capacidade_raw:
         return None
-    if not capacidade_raw.isdigit():
+    # isascii(): "²" passa em isdigit() mas não em int(). Zero seria lido como
+    # "sem limite" pela RN-006, então também é recusado.
+    if not (capacidade_raw.isascii() and capacidade_raw.isdigit()) or int(capacidade_raw) < 1:
         raise CadastroError(
             "Capacidade máxima deve ser um número inteiro positivo.",
             campo="capacidade_maxima",
         )
+    if int(capacidade_raw) > 10000:
+        raise CadastroError("Capacidade máxima deve ser de no máximo 10000 leitos.", campo="capacidade_maxima")
     return int(capacidade_raw)
 
 
 # ------------------------------------------------------------- Socorristas
 
 def listar_socorristas():
-    return Socorrista.query.join(Usuario).order_by(Usuario.nome).all()
+    # contas temporárias do modo demonstração não são equipe: ficam fora do cadastro
+    from app.services.demo_service import DOMINIO_VISITANTE
+
+    return (
+        Socorrista.query.join(Usuario)
+        .filter(~Usuario.email.like(f"%{DOMINIO_VISITANTE}"))
+        .order_by(Usuario.nome)
+        .all()
+    )
 
 
 def obter_socorrista(socorrista_id):
@@ -261,6 +293,7 @@ def obter_socorrista(socorrista_id):
 
 
 def criar_socorrista(dados, admin_atual):
+    _validar_tamanhos(dados)
     nome = (dados.get("nome") or "").strip()
     email = (dados.get("email") or "").strip().lower()
     senha = dados.get("senha") or ""
@@ -307,6 +340,7 @@ def editar_socorrista(socorrista_id, dados, admin_atual):
     socorrista = obter_socorrista(socorrista_id)
     usuario = socorrista.usuario
 
+    _validar_tamanhos(dados)
     nome = (dados.get("nome") or "").strip()
     email = (dados.get("email") or "").strip().lower()
     senha = dados.get("senha") or ""
@@ -384,6 +418,7 @@ def _contar_admins_ativos(ignorar_id=None):
 
 
 def criar_admin(dados, admin_atual):
+    _validar_tamanhos(dados)
     nome = (dados.get("nome") or "").strip()
     email = (dados.get("email") or "").strip().lower()
     senha = dados.get("senha") or ""
@@ -419,6 +454,7 @@ def criar_admin(dados, admin_atual):
 def editar_admin(admin_id, dados, admin_atual):
     admin = obter_admin(admin_id)
 
+    _validar_tamanhos(dados)
     nome = (dados.get("nome") or "").strip()
     email = (dados.get("email") or "").strip().lower()
     senha = dados.get("senha") or ""

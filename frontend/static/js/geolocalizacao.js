@@ -68,15 +68,45 @@ function esconderDialogoLocalizacao() {
  * detalhe da ocorrência. Compartilhado entre o lado socorrista (eco do
  * próprio envio) e o lado hospital (evento recebido via WebSocket).
  */
+/** Formatos pt-BR usados nos números ao vivo: "12,5 km" e "4 min". */
+function formatarKm(km) {
+    return `${Number(km).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`;
+}
+function formatarMin(min) {
+    return `${Math.max(1, Math.round(Number(min)))} min`;
+}
+
 function atualizarTextoEta(distanciaKm, tempoMin) {
     const elDist = document.getElementById("distancia-estimada");
     const elTempo = document.getElementById("tempo-estimado");
     if (elDist && distanciaKm !== null && distanciaKm !== undefined) {
-        elDist.textContent = `${distanciaKm} km`;
+        elDist.textContent = formatarKm(distanciaKm);
     }
     if (elTempo && tempoMin !== null && tempoMin !== undefined) {
-        elTempo.textContent = `${tempoMin} min`;
+        elTempo.textContent = formatarMin(tempoMin);
     }
+    // pílula sobre o mapa (tela da ocorrência)
+    document.querySelectorAll("[data-eta-tempo]").forEach((el) => {
+        if (tempoMin !== null && tempoMin !== undefined) el.textContent = formatarMin(tempoMin);
+    });
+    document.querySelectorAll("[data-eta-dist]").forEach((el) => {
+        if (distanciaKm !== null && distanciaKm !== undefined) el.textContent = formatarKm(distanciaKm);
+    });
+}
+
+/** Painel ao vivo da ocorrência: move o veículo na trilha (0..1). */
+function atualizarProgressoTrajeto(fracao) {
+    if (fracao === null || fracao === undefined) return;
+    const pct = Math.max(0, Math.min(1, fracao)) * 100;
+    document.querySelectorAll("[data-progresso-trajeto]").forEach((el) => {
+        el.style.setProperty("--progresso", pct.toFixed(1) + "%");
+    });
+    // a viatura 3D "liga" enquanto há trajeto e desliga ao chegar
+    const visor = document.getElementById("oc-visor");
+    if (visor) visor.dataset.movimento = fracao < 0.999 ? "1" : "0";
+    document.querySelectorAll(".eta-pilula").forEach((p) => p.classList.toggle("ativa", fracao < 0.999));
+    const rotulo = document.getElementById("progresso-pct");
+    if (rotulo) rotulo.textContent = Math.round(pct) + "%";
 }
 
 /**

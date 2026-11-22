@@ -1,0 +1,489 @@
+{
+  "paginas": [
+    {
+      "perfil": "anonimo",
+      "rota": "/login",
+      "titulo": "Login - OrbisHealth",
+      "idioma": "pt-br",
+      "campos": 2,
+      "campos_sem_rotulo": [],
+      "imagens_sem_alt": 0,
+      "botoes_links_sem_texto": 0,
+      "rolagem_horizontal_px": 0,
+      "axe_violacoes": []
+    },
+    {
+      "perfil": "admin",
+      "rota": "/admin/",
+      "titulo": "Cadastro - OrbisHealth",
+      "idioma": "pt-br",
+      "campos": 1,
+      "campos_sem_rotulo": [],
+      "imagens_sem_alt": 0,
+      "botoes_links_sem_texto": 0,
+      "rolagem_horizontal_px": 0,
+      "axe_violacoes": [
+        {
+          "id": "color-contrast",
+          "impacto": "serious",
+          "ocorrencias": 3,
+          "ajuda": "Elements must meet minimum color contrast ratio thresholds",
+          "exemplos": [
+            {
+              "alvo": "nav > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": ".sidebar-footer > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": "small",
+              "detalhe": "contraste 3.54:1 (mínimo 4.5:1), #888888 sobre #ffffff"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "perfil": "admin",
+      "rota": "/admin/hospitais",
+      "titulo": "Hospitais - OrbisHealth",
+      "idioma": "pt-br",
+      "campos": 1,
+      "campos_sem_rotulo": [],
+      "imagens_sem_alt": 0,
+      "botoes_links_sem_texto": 0,
+      "rolagem_horizontal_px": 0,
+      "axe_violacoes": [
+        {
+          "id": "color-contrast",
+          "impacto": "serious",
+          "ocorrencias": 10,
+          "ajuda": "Elements must meet minimum color contrast ratio thresholds",
+          "exemplos": [
+            {
+              "alvo": "nav > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": ".sidebar-footer > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": "small",
+              "detalhe": "contraste 3.54:1 (mínimo 4.5:1), #888888 sobre #ffffff"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "perfil": "admin",
+      "rota": "/admin/hospitais/novo",
+      "titulo": "Novo Hospital - OrbisHealth",
+      "idioma": "pt-br",
+      "campos": 9,
+      "campos_sem_rotulo": [],
+      "imagens_sem_alt": 0,
+      "botoes_links_sem_texto": 0,
+      "rolagem_horizontal_px": 0,
+      "axe_violacoes": [
+        {
+          "id": "color-contrast",
+          "impacto": "serious",
+          "ocorrencias": 3,
+          "ajuda": "Elements must meet minimum color contrast ratio thresholds",
+          "exemplos": [
+            {
+              "alvo": "nav > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": ".sidebar-footer > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": "small",
+              "detalhe": "contraste 3.54:1 (mínimo 4.5:1), #888888 sobre #ffffff"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "perfil": "admin",
+      "rota": "/admin/socorristas",
+      "titulo": "Socorristas - OrbisHealth",
+      "idioma": "pt-br",
+      "campos": 1,
+      "campos_sem_rotulo": [],
+      "imagens_sem_alt": 0,
+      "botoes_links_sem_texto": 0,
+      "rolagem_horizontal_px": 0,
+      "axe_violacoes": [
+        {
+          "id": "color-contrast",
+          "impacto": "serious",
+          "ocorrencias": 11,
+          "ajuda": "Elements must meet minimum color contrast ratio thresholds",
+          "exemplos": [
+            {
+              "alvo": "nav > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": ".sidebar-footer > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": "small",
+              "detalhe": "contraste 3.54:1 (mínimo 4.5:1), #888888 sobre #ffffff"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "perfil": "socorrista",
+      "rota": "/dashboard",
+      "titulo": "Ocorrência #36 - OrbisHealth",
+      "idioma": "pt-br",
+      "campos": 2,
+      "campos_sem_rotulo": [],
+      "imagens_sem_alt": 0,
+      "botoes_links_sem_texto": 0,
+      "rolagem_horizontal_px": 0,
+      "axe_violacoes": [
+        {
+          "id": "color-contrast",
+          "impacto": "serious",
+          "ocorrencias": 11,
+          "ajuda": "Elements must meet minimum color contrast ratio thresholds",
+          "exemplos": [
+            {
+              "alvo": "nav > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": ".sidebar-footer > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": "div:nth-child(1) > .info-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "perfil": "socorrista",
+      "rota": "/ocorrencias/36",
+      "titulo": "Ocorrência #36 - OrbisHealth",
+      "idioma": "pt-br",
+      "campos": 2,
+      "campos_sem_rotulo": [],
+      "imagens_sem_alt": 0,
+      "botoes_links_sem_texto": 0,
+      "rolagem_horizontal_px": 0,
+      "axe_violacoes": [
+        {
+          "id": "color-contrast",
+          "impacto": "serious",
+          "ocorrencias": 11,
+          "ajuda": "Elements must meet minimum color contrast ratio thresholds",
+          "exemplos": [
+            {
+              "alvo": "nav > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": ".sidebar-footer > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": "div:nth-child(1) > .info-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "perfil": "socorrista",
+      "rota": "/ocorrencias/36/pacientes",
+      "titulo": "Pacientes - OrbisHealth",
+      "idioma": "pt-br",
+      "campos": 1,
+      "campos_sem_rotulo": [],
+      "imagens_sem_alt": 0,
+      "botoes_links_sem_texto": 0,
+      "rolagem_horizontal_px": 0,
+      "axe_violacoes": [
+        {
+          "id": "color-contrast",
+          "impacto": "serious",
+          "ocorrencias": 3,
+          "ajuda": "Elements must meet minimum color contrast ratio thresholds",
+          "exemplos": [
+            {
+              "alvo": "nav > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": ".sidebar-footer > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": "small",
+              "detalhe": "contraste 3.54:1 (mínimo 4.5:1), #888888 sobre #ffffff"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "perfil": "socorrista",
+      "rota": "/ocorrencias/36/pacientes/novo",
+      "titulo": "Novo Prontuário - OrbisHealth",
+      "idioma": "pt-br",
+      "campos": 23,
+      "campos_sem_rotulo": [],
+      "imagens_sem_alt": 0,
+      "botoes_links_sem_texto": 0,
+      "rolagem_horizontal_px": 0,
+      "axe_violacoes": [
+        {
+          "id": "color-contrast",
+          "impacto": "serious",
+          "ocorrencias": 3,
+          "ajuda": "Elements must meet minimum color contrast ratio thresholds",
+          "exemplos": [
+            {
+              "alvo": "nav > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": ".sidebar-footer > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": ".topbar-profile-info > small",
+              "detalhe": "contraste 3.54:1 (mínimo 4.5:1), #888888 sobre #ffffff"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "perfil": "socorrista",
+      "rota": "/inbox/",
+      "titulo": "Inbox - OrbisHealth",
+      "idioma": "pt-br",
+      "campos": 2,
+      "campos_sem_rotulo": [],
+      "imagens_sem_alt": 0,
+      "botoes_links_sem_texto": 0,
+      "rolagem_horizontal_px": 0,
+      "axe_violacoes": [
+        {
+          "id": "color-contrast",
+          "impacto": "serious",
+          "ocorrencias": 10,
+          "ajuda": "Elements must meet minimum color contrast ratio thresholds",
+          "exemplos": [
+            {
+              "alvo": "nav > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": ".sidebar-footer > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": "small",
+              "detalhe": "contraste 3.54:1 (mínimo 4.5:1), #888888 sobre #ffffff"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "perfil": "socorrista",
+      "rota": "/perfil",
+      "titulo": "Perfil - OrbisHealth",
+      "idioma": "pt-br",
+      "campos": 7,
+      "campos_sem_rotulo": [],
+      "imagens_sem_alt": 0,
+      "botoes_links_sem_texto": 0,
+      "rolagem_horizontal_px": 0,
+      "axe_violacoes": [
+        {
+          "id": "color-contrast",
+          "impacto": "serious",
+          "ocorrencias": 9,
+          "ajuda": "Elements must meet minimum color contrast ratio thresholds",
+          "exemplos": [
+            {
+              "alvo": "nav > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": ".sidebar-footer > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": "small",
+              "detalhe": "contraste 3.54:1 (mínimo 4.5:1), #888888 sobre #ffffff"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "perfil": "hospital",
+      "rota": "/dashboard",
+      "titulo": "Lista de emergência - OrbisHealth",
+      "idioma": "pt-br",
+      "campos": 1,
+      "campos_sem_rotulo": [],
+      "imagens_sem_alt": 0,
+      "botoes_links_sem_texto": 0,
+      "rolagem_horizontal_px": 0,
+      "axe_violacoes": [
+        {
+          "id": "color-contrast",
+          "impacto": "serious",
+          "ocorrencias": 13,
+          "ajuda": "Elements must meet minimum color contrast ratio thresholds",
+          "exemplos": [
+            {
+              "alvo": "nav > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": ".sidebar-footer > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": "article[data-id=\"36\"] > .emg-card-topo > .emg-status-atendimento.emg-status",
+              "detalhe": "contraste 3.88:1 (mínimo 4.5:1), #9a7400 sobre #fdf3d0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "perfil": "hospital",
+      "rota": "/ocorrencias/36/prontuario",
+      "titulo": "Pré-prontuário EMG-0036 - OrbisHealth",
+      "idioma": "pt-br",
+      "campos": 1,
+      "campos_sem_rotulo": [],
+      "imagens_sem_alt": 0,
+      "botoes_links_sem_texto": 0,
+      "rolagem_horizontal_px": 0,
+      "axe_violacoes": [
+        {
+          "id": "color-contrast",
+          "impacto": "serious",
+          "ocorrencias": 14,
+          "ajuda": "Elements must meet minimum color contrast ratio thresholds",
+          "exemplos": [
+            {
+              "alvo": "nav > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": ".sidebar-footer > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": "small",
+              "detalhe": "contraste 3.54:1 (mínimo 4.5:1), #888888 sobre #ffffff"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "perfil": "hospital",
+      "rota": "/emergencias/historico",
+      "titulo": "Histórico de emergências - OrbisHealth",
+      "idioma": "pt-br",
+      "campos": 7,
+      "campos_sem_rotulo": [],
+      "imagens_sem_alt": 0,
+      "botoes_links_sem_texto": 0,
+      "rolagem_horizontal_px": 0,
+      "axe_violacoes": [
+        {
+          "id": "color-contrast",
+          "impacto": "serious",
+          "ocorrencias": 19,
+          "ajuda": "Elements must meet minimum color contrast ratio thresholds",
+          "exemplos": [
+            {
+              "alvo": "nav > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": ".sidebar-footer > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": "small",
+              "detalhe": "contraste 3.54:1 (mínimo 4.5:1), #888888 sobre #ffffff"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "perfil": "hospital",
+      "rota": "/inbox/36",
+      "titulo": "Ocorrência #36 - OrbisHealth",
+      "idioma": "pt-br",
+      "campos": 2,
+      "campos_sem_rotulo": [],
+      "imagens_sem_alt": 0,
+      "botoes_links_sem_texto": 0,
+      "rolagem_horizontal_px": 0,
+      "axe_violacoes": [
+        {
+          "id": "color-contrast",
+          "impacto": "serious",
+          "ocorrencias": 11,
+          "ajuda": "Elements must meet minimum color contrast ratio thresholds",
+          "exemplos": [
+            {
+              "alvo": "nav > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": ".sidebar-footer > .sidebar-section-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            },
+            {
+              "alvo": "div:nth-child(1) > .info-label",
+              "detalhe": "contraste 2.84:1 (mínimo 4.5:1), #999999 sobre #ffffff"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "teclado_login": {
+    "ordem_do_tab": [
+      "senha",
+      "A",
+      "submit",
+      "BODY",
+      "email",
+      "senha"
+    ],
+    "login_so_com_teclado": true
+  }
+}

@@ -3,6 +3,10 @@
 
 {% block title %}Inbox - OrbisHealth{% endblock %}
 
+{% block cel_voltar %}{% if ocorrencia_ativa %}{{ url_for('inbox.index') }}{% endif %}{% endblock %}
+{% block cel_titulo %}{{ outro_nome if ocorrencia_ativa else "Conversas" }}{% endblock %}
+{% block cel_sub %}{{ "Conversa encerrada" if ocorrencia_ativa else "Atendimentos finalizados" }}{% endblock %}
+
 {% block app_content %}
 <div class="split-pane">
     <div class="inbox-lista">
@@ -16,7 +20,7 @@
 
         <div class="inbox-busca">
             {{ icons.icon("search", 16) }}
-            <input type="text" id="inbox-busca" placeholder="Buscar conversas..." autocomplete="off">
+            <input type="text" id="inbox-busca" aria-label="Buscar conversas" placeholder="Buscar conversas..." autocomplete="off">
         </div>
 
         <div class="inbox-abas">
@@ -33,7 +37,7 @@
                href="{{ url_for('inbox.conversa', ocorrencia_id=conversa.ocorrencia_id) }}"
                data-nao-lidas="{{ conversa.nao_lidas }}"
                data-busca="{{ (conversa.titulo ~ ' ' ~ (conversa.ultima_mensagem or '')) | lower }}">
-                <span class="inbox-avatar">{{ conversa.titulo | iniciais }}</span>
+                <span class="inbox-avatar">{{ conversa.titulo.split(" — ")[0] | iniciais }}</span>
                 <div class="inbox-item-corpo">
                     <div class="inbox-item-header">
                         <strong>{{ conversa.titulo }}</strong>
@@ -69,8 +73,12 @@
             <div class="chat-mensagens" id="chat-mensagens"></div>
             <div class="chat-form-desabilitada" title="Esta conversa foi encerrada">
                 {{ icons.icon("paperclip", 18) }}
-                <input type="text" placeholder="Conversa encerrada" disabled>
+                <input type="text" placeholder="Conversa encerrada" aria-label="Conversa encerrada" disabled>
                 <button type="button" disabled>{{ icons.icon("send", 16) }}</button>
+            </div>
+            <div class="cel-so cel-encerrado">
+                {{ icons.icon("lock", 15) }}
+                <span>Atendimento finalizado. A conversa fica disponível só para leitura.</span>
             </div>
         </div>
         {% else %}

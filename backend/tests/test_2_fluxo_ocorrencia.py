@@ -85,7 +85,7 @@ class TestFluxoOcorrencia:
         soc_page.wait_for_load_state("networkidle")
 
         assert "Hospital de destino confirmado!" in texto_flash(soc_page)
-        assert "Em Transporte" in soc_page.locator(".status-badge").first.inner_text()
+        assert "Em transporte" in soc_page.locator(".status-badge").first.inner_text()
         ocorrencia = _ocorrencia(contexto)
         assert ocorrencia.status.value == "em_transporte"
         assert ocorrencia.tipo_rota.value == "terrestre"

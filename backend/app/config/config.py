@@ -1,8 +1,28 @@
 import os
+import secrets
 
 
 class Config:
-    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
+    # Sem SECRET_KEY no ambiente, gera uma aleatória a cada início: as sessões
+    # caem quando o servidor reinicia, mas ninguém consegue forjar um cookie de
+    # sessão com uma chave conhecida (a antiga "dev-secret-key" estava no Git).
+    SECRET_KEY = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
+
+    # Cookie de sessão: inacessível ao JavaScript e não enviado em POSTs
+    # vindos de outros sites (primeira barreira contra CSRF; a segunda é a
+    # checagem de origem em app/__init__.py).
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = "Lax"
+
+    # ATRAS_DE_PROXY=1 no .env quando houver um proxy reverso com HTTPS na
+    # frente do servidor (ver app/__init__.py e a seção de hospedagem do README).
+    ATRAS_DE_PROXY = os.environ.get("ATRAS_DE_PROXY", "0").lower() in ("1", "true", "sim")
+
+    # MODO_DEMONSTRACAO=1: libera /demo (entrada sem cadastro pelo QR code,
+    # para a apresentação do TCC). Ver app/services/demo_service.py.
+    MODO_DEMONSTRACAO = os.environ.get("MODO_DEMONSTRACAO", "0").lower() in ("1", "true", "sim")
 
     DB_HOST = os.environ.get("DB_HOST", "localhost")
     DB_PORT = os.environ.get("DB_PORT", "5432")
@@ -14,6 +34,9 @@ class Config:
         f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # Testa a conexão antes de usá-la: se o PostgreSQL reiniciou, a conexão
+    # morta do pool é descartada em vez de virar erro 500 para o usuário.
+    SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
 
     # HU-001, cenário 3: após MAX_LOGIN_ATTEMPTS tentativas incorretas seguidas,
     # o usuário fica bloqueado por LOGIN_LOCKOUT_MINUTES minutos.

@@ -4,12 +4,17 @@ Flask-Migrate==4.0.7
 Flask-Login==0.6.3
 Flask-SocketIO==5.3.6
 python-dotenv==1.0.1
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.11  # 2.9.9 não instala no Python 3.14
 bcrypt==4.2.0
+Pillow==13.0.0  # fotos anexadas ao prontuário (app/services/anexo_service.py)
+# Windows não traz a base de fusos horários que o zoneinfo usa (FUSO_HORARIO)
+tzdata==2025.2; sys_platform == "win32"
+segno==1.6.6  # QR code do modo demonstração (/demo/qrcode)
 
-# Testes automatizados (tests/) — depois de instalar, rodar também:
-#   playwright install chromium
+# Testes automatizados (tests/ e testes_nao_funcionais/) — depois de
+# instalar, rodar também:
+#   playwright install chromium firefox webkit
 pytest==8.3.3
 pytest-playwright==0.5.2
 fpdf2==2.8.9
-Pillow==13.0.0
+requests==2.34.2

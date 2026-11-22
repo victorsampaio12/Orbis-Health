@@ -27,6 +27,18 @@ def _limpar_bloqueio_expirado(usuario):
         db.session.commit()
 
 
+def acesso_revogado(usuario):
+    """Conta que não pode mais usar o sistema: admin desativado ou usuário de
+    hospital desativado. Vale no login E em toda requisição (ver load_user em
+    app/__init__.py) — senão quem já estava logado continuaria entrando.
+    Socorrista inativo NÃO entra aqui: pela RN-014 ele loga, só não opera."""
+    if usuario.papel == PapelEnum.admin:
+        return not usuario.ativo
+    if usuario.papel == PapelEnum.hospital:
+        return usuario.hospital is not None and not usuario.hospital.ativo
+    return False
+
+
 def autenticar(email, senha):
     """Valida credenciais e regras de bloqueio da HU-001.
 
@@ -60,10 +72,9 @@ def autenticar(email, senha):
         db.session.commit()
         raise AuthError(MENSAGEM_CREDENCIAIS_INVALIDAS)
 
-    # RN-015: usuário vinculado a hospital desativado tem o login bloqueado.
-    if usuario.papel == PapelEnum.hospital and usuario.hospital is not None:
-        if not usuario.hospital.ativo:
-            raise AuthError(MENSAGEM_PERFIL_BLOQUEADO)
+    # RN-015 (hospital desativado) e RN-020 (admin desativado): login bloqueado.
+    if acesso_revogado(usuario):
+        raise AuthError(MENSAGEM_PERFIL_BLOQUEADO)
 
     # RN-014: socorrista inativo consegue logar normalmente (não verificado aqui).
 

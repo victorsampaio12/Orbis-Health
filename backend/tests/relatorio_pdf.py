@@ -422,7 +422,10 @@ def _metodologia(pdf):
         "rota, chat e notificações em tempo real, prontuário, trajeto, chegada, finalização, "
         "relatório, inbox, histórico e exportação.\n"
         "• test_3_seguranca_validacao.py — testes negativos: autenticação, permissões entre "
-        "perfis, validação no servidor e regras de negócio que precisam ser recusadas."
+        "perfis, validação no servidor e regras de negócio que precisam ser recusadas.\n"
+        "• test_4_revisao_geral.py — regressões da revisão geral do sistema: cada teste "
+        "reproduz um defeito (CSRF, sessão de conta desativada, corrida na lotação, limites "
+        "do prontuário, volume do painel e do inbox...) e falhava antes da correção."
     )
     pdf.subtitulo("Testes em sequência (jornada de uso)")
     pdf.paragrafo(
@@ -442,7 +445,7 @@ def _metodologia(pdf):
     pdf.paragrafo(
         "Seção 2: resultado de cada teste. Seções 3 a 5: cobertura de rotas HTTP (lida do log "
         "do servidor durante a execução), de eventos WebSocket e de regras de negócio. Seção 6: "
-        "bugs encontrados pelos testes. Seção 7: uma página por teste, com objetivo, verificações "
+        "bugs encontrados pelos testes, incluindo os 17 defeitos da revisão geral. Seção 7: uma página por teste, com objetivo, verificações "
         "feitas (extraídas do código), requisições HTTP disparadas e o print da tela de cada "
         "perfil envolvido no momento em que o teste terminou."
     )
@@ -662,6 +665,57 @@ def _pagina_bug(pdf):
         "test_horarios_no_fuso_de_brasilia converte o horário gravado no banco para o fuso de "
         "Brasília e confere que ele aparece igual no histórico, no relatório e no CSV."
     )
+
+    pdf.add_page()
+    pdf.titulo("6. Bugs encontrados (cont.) — revisão geral, Plano de Testes PT-ORBIS-001")
+    pdf.paragrafo(
+        "Cada defeito abaixo ganhou um teste em tests/test_4_revisao_geral.py que FALHAVA no "
+        "código original (commit 3f0e382) e passa depois da correção. Os de infraestrutura "
+        "foram achados pelos testes não funcionais (testes_nao_funcionais/)."
+    )
+    for codigo, severidade, defeito, correcao in DEFEITOS_REVISAO:
+        pdf.ln(1.5)
+        pdf.paragrafo(f"{codigo} [{severidade}] {defeito}", estilo="B", tamanho=9.5)
+        pdf.paragrafo(f"Correção: {correcao}", tamanho=9)
+
+
+DEFEITOS_REVISAO = [
+    ("D01", "alta", "Admin desativado continuava entrando e podia se reativar; sessões de hospital "
+     "desativado continuavam valendo.", "acesso_revogado() checado no login e em toda requisição (load_user)."),
+    ("D02", "alta", "Nenhuma proteção contra CSRF: um site externo podia enviar formulários com a "
+     "sessão do usuário (ex.: criar um admin).", "Cookie SameSite=Lax + recusa de POST com Origin/Referer de outro site."),
+    ("D03", "média", "Hospital podia ser trocado em ocorrência finalizada ou com trajeto iniciado, "
+     "expondo o chat antigo ao novo hospital.", "verificar_operacao(): status permitido por ação, no servidor."),
+    ("D04", "média", "Hospital abandonado continuava recebendo posição e chat pela sala do WebSocket.",
+     "close_room() da sala da ocorrência ao trocar de hospital."),
+    ("D05", "média", "Campos do prontuário acima do tamanho da coluna ou fora da faixa davam erro 500 "
+     "(e saturação -5 virava prioridade crítica).", "Limites de tamanho e faixas fisiológicas com mensagem."),
+    ("D06", "média", "Editar com foto removida + campo inválido apagava o arquivo do disco mesmo com o "
+     "banco desfeito (foto quebrada para sempre).", "Arquivos só saem do disco depois do commit."),
+    ("D07", "média", "Corrida na lotação: dois socorristas ao mesmo tempo passavam do limite de leitos.",
+     "SELECT ... FOR UPDATE na linha do hospital durante a seleção."),
+    ("D08", "média", "SECRET_KEY padrão fixa no código e debug=True ligado no run.py.",
+     "Chave aleatória quando ausente; debug só com FLASK_DEBUG=1."),
+    ("D09", "baixa", "Nome de hospital com </script> quebrava a página de seleção (XSS armazenado).",
+     "JSON dentro de <script> com '<' escapado; popup do mapa com textContent."),
+    ("D10", "baixa", "Entradas malformadas davam erro 500: hospital_id=abc, data 9999-12-31, busca '²', "
+     "coordenada inf/999, nome de perfil com 300 caracteres.", "Validação de cada entrada."),
+    ("D11", "baixa", "Ocorrência finalizada aceitava nova finalização, novos pacientes e nova localização; "
+     "socorrista inativo ainda operava.", "verificar_operacao() em todas as ações de escrita."),
+    ("D12", "baixa", "Exportação CSV executava fórmulas (=HYPERLINK...) ao abrir no Excel.",
+     "Células começando com = + - @ prefixadas com apóstrofo."),
+    ("D13", "média", "downgrade das migrations deixava os tipos enum no banco e um novo upgrade falhava.",
+     "DROP TYPE IF EXISTS nos downgrades (integridade, 7.2.1)."),
+    ("D14", "média", "Após reiniciar o PostgreSQL, a primeira requisição dava erro 500 (conexão morta "
+     "no pool).", "pool_pre_ping=True (recuperação, 7.2.10)."),
+    ("D15", "média", "psycopg2-binary 2.9.9 não instala no Python 3.14 (quebrou o venv após atualizar "
+     "o sistema).", "psycopg2-binary 2.9.11 (instalação, 7.2.12)."),
+    ("D16", "baixa", "Campos sem rótulo acessível e marcadores do mapa sem nome (axe-core).",
+     "aria-label / label for / title nos marcadores (interface, 7.2.4)."),
+    ("D17", "alta", "Com um ano de dados (20 mil ocorrências), o painel do hospital levava 21,7 s (42 MB) "
+     "e o inbox 40,7 s.", "Painel: ativas + 30 últimas finalizadas; inbox calculado no banco (100 "
+     "recentes + não lidas); índices nas chaves estrangeiras (volume, 7.2.8)."),
+]
 
 
 def _preparar_imagem(caminho, dir_saida):

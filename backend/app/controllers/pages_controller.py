@@ -73,9 +73,11 @@ def preferencia_menu():
 
 def _data(valor):
     try:
-        return datetime.strptime(valor, "%Y-%m-%d").date() if valor else None
+        data = datetime.strptime(valor, "%Y-%m-%d").date() if valor else None
     except ValueError:
         return None
+    # datas absurdas (ano 1 ou 9999) estouram a conversão de fuso
+    return data if data is None or 1900 <= data.year <= 2100 else None
 
 
 def _filtros_historico():

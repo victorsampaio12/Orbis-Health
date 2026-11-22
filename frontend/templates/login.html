@@ -1,45 +1,62 @@
 {% extends "base.html" %}
+{% import "_icons.html" as icons %}
+{% import "_marca.html" as marca %}
 
 {% block title %}Login - OrbisHealth{% endblock %}
 
 {% block content %}
-<div class="login-screen">
-    <div class="login-hero" style="background-image: url('{{ url_for('static', filename='img/login-background.png') }}');">
-        <div class="login-hero-overlay"></div>
-
-        <img class="login-hero-logo" src="{{ url_for('static', filename='img/logo-white.png') }}" alt="OrbisHealth">
-
-        <div class="login-hero-text">
-            <h1>Quando cada segundo importa,<br>coordenação salva vidas.</h1>
-            <p>Acreditamos que todos os serviços de emergência merecem acesso
-                simples a soluções de gestão de padrão mundial.</p>
-            <div class="login-hero-dots">
-                <span class="dot dot-active"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
+<div class="login">
+    <section class="login-foto" style="--foto: url('{{ url_for('static', filename='img/login-background.png') }}');">
+        <div class="login-foto-conteudo">
+            <div class="login-marca">
+                <span class="login-marca-icone">{{ marca.marca(22) }}</span>
+                <span>Orbis<em>Health</em></span>
+            </div>
+            <div class="login-mensagem">
+                <h1>Quando cada segundo importa, coordenação salva vidas.</h1>
+                <p>Do local da emergência ao leito certo — a central que conecta as equipes do SAMU-DF
+                    aos hospitais públicos do Distrito Federal e Entorno, em tempo real.</p>
+                <ul class="login-fatos">
+                    <li><strong>{{ total_hospitais }}</strong> hospitais na rede</li>
+                    <li><strong>24h</strong> de monitoramento</li>
+                    <li><strong>&lt;1s</strong> para o hospital ser avisado</li>
+                </ul>
             </div>
         </div>
-    </div>
+    </section>
 
-    <div class="login-form-panel">
-        <div class="login-language-switch">Português <span>&#9662;</span></div>
-
-        <div class="login-form-wrap">
-            <h2>Login</h2>
-            <p class="login-subtitle">Bem Vindo! Por Favor adicione seu email e senha.</p>
+    <section class="login-painel">
+        <div class="login-caixa">
+            <h2>Entrar na central</h2>
+            <p class="login-sub">Use o e-mail e a senha fornecidos pela coordenação.</p>
 
             <form method="POST" action="{{ url_for('auth.login') }}">
-                <label for="email">Login</label>
-                <input type="email" id="email" name="email" required autofocus>
+                <label for="email">E-mail</label>
+                <div class="campo-icone">
+                    {{ icons.icon("mail", size=16) }}
+                    <input type="email" id="email" name="email" placeholder="voce@orbishealth.com" autocomplete="username" required autofocus>
+                </div>
 
-                <label for="senha">Senha</label>
-                <input type="password" id="senha" name="senha" required>
+                <div class="login-rotulo-linha">
+                    <label for="senha">Senha</label>
+                    <a class="forgot-password" href="#">Esqueceu a senha?</a>
+                </div>
+                <div class="campo-icone">
+                    {{ icons.icon("lock", size=16) }}
+                    <input type="password" id="senha" name="senha" placeholder="Sua senha" autocomplete="current-password" required>
+                </div>
 
-                <a class="forgot-password" href="#">Esqueceu a senha?</a>
-
-                <button type="submit">Login</button>
+                <button type="submit" class="btn btn-primary btn-block btn-lg">Login {{ icons.icon("arrow-right", size=16) }}</button>
             </form>
+
+            {% if config.MODO_DEMONSTRACAO %}
+            <a class="btn btn-secondary btn-block btn-lg login-demo" style="margin-top: 10px;" href="{{ url_for('demo.entrada') }}">
+                {{ icons.icon("zap", size=16) }} Testar sem cadastro (demonstração)
+            </a>
+            {% endif %}
+
+            <p class="login-rodape">{{ icons.icon("shield-check", size=14) }} Conexão segura · dados de saúde protegidos pela LGPD</p>
         </div>
-    </div>
+    </section>
 </div>
 {% endblock %}

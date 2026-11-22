@@ -21,10 +21,12 @@ function iniciarRastreamentoSocorrista(ocorrenciaId) {
             window.OrbisMapaOcorrencia.atualizarPosicaoSocorrista(dados.lat, dados.lng);
         }
         atualizarTextoEta(dados.distancia_estimada_km, dados.tempo_estimado_min);
+        if (typeof atualizarProgressoTrajeto === "function") atualizarProgressoTrajeto(dados.progresso);
         atualizarVisibilidadeChegada(dados.distancia_estimada_km, dadosIniciais.raio_chegada_km);
     });
 
     socket.on("trajeto_concluido", () => {
+        if (typeof atualizarProgressoTrajeto === "function") atualizarProgressoTrajeto(1);
         if (botaoIniciar) botaoIniciar.textContent = "Trajeto concluído";
         if (status) {
             status.textContent = "Trajeto concluído — confirme a chegada quando o botão aparecer.";

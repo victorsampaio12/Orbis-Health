@@ -5,21 +5,39 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/maplibre/maplibre-gl.css') }}">
 {% endblock %}
 
 {% block app_content %}
-<div class="split-pane">
-    <div class="split-pane-list emg-lista">
-        <div class="emg-lista-topo">
-            <h1>Lista de emergência</h1>
-            <span class="emg-contagem">{{ emergencias | selectattr("ativa") | list | length }} a caminho</span>
+{% set a_caminho = emergencias | selectattr("ativa") | list | length %}
+{% set finalizadas = (emergencias | length) - a_caminho %}
+<div class="split-pane palco">
+    <div class="emg-mapa-wrap palco-mapa">
+        <div id="mapa-emergencias"></div>
+        <div class="emg-paineis" id="emg-paineis" hidden></div>
+    </div>
+
+    <div class="split-pane-list emg-lista painel-flutuante painel-esquerdo">
+        <header class="painel-cabeca">
+            <span class="sobre"><span class="ao-vivo"></span> Pronto-socorro · recebendo</span>
+            <h1 class="titulo-display">Lista de<br>emergência</h1>
+            <div class="numeros-display">
+                <div><strong class="emg-contagem-numero">{{ a_caminho }}</strong><span>A caminho</span></div>
+                <div><strong>{{ finalizadas }}</strong><span>Finalizadas</span></div>
+            </div>
+        </header>
+
+        <div class="abas abas-cheias" role="tablist" data-abas="emg">
+            <button type="button" class="aba ativa" data-filtro="todas">Todas</button>
+            <button type="button" class="aba" data-filtro="ativa">A caminho</button>
+            <button type="button" class="aba" data-filtro="finalizada">Finalizadas</button>
         </div>
 
         {% for e in emergencias %}
-        <article class="emg-card {{ 'emg-card-finalizada' if not e.ativa }}" data-id="{{ e.id }}" tabindex="0">
+        <article class="emg-card {{ 'emg-card-finalizada' if not e.ativa }}" data-id="{{ e.id }}" data-situacao="{{ 'ativa' if e.ativa else 'finalizada' }}" tabindex="0">
             <header class="emg-card-topo">
                 <span class="emg-card-icone">{{ icons.icon("helicopter" if e.veiculo == "helicoptero" else "ambulance", 18) }}</span>
-                <strong>{{ e.id | codigo_emg }}</strong>
+                <strong class="mono">{{ e.id | codigo_emg }}</strong>
                 <span class="emg-status emg-status-{{ e.status }}">{{ e.status_rotulo }}</span>
             </header>
 
@@ -34,7 +52,7 @@
                         {% if e.finalizado_em %}
                         <small data-utc="{{ e.finalizado_em }}" data-formato="datahora"></small>
                         {% elif e.tempo_estimado_min is not none %}
-                        <small class="emg-eta">≈ {{ e.tempo_estimado_min | round(1) }} min</small>
+                        <small class="emg-eta">≈ {{ e.tempo_estimado_min | minutos }}</small>
                         {% endif %}
                     </span>
                 </div>
@@ -63,13 +81,12 @@
             </div>
         </article>
         {% else %}
-        <p class="placeholder-page">Nenhuma ocorrência direcionada a este hospital ainda.</p>
+        <div class="estado-vazio">
+            <span class="estado-vazio-icone">{{ icons.icon("clipboard-list", 22) }}</span>
+            <strong>Nenhuma emergência a caminho</strong>
+            <p>Quando um socorrista escolher este hospital, a emergência aparece aqui na hora — com aviso sonoro.</p>
+        </div>
         {% endfor %}
-    </div>
-
-    <div class="emg-mapa-wrap">
-        <div id="mapa-emergencias"></div>
-        <div class="emg-paineis" id="emg-paineis" hidden></div>
     </div>
 </div>
 {% endblock %}
@@ -78,11 +95,26 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="{{ url_for('static', filename='js/geolocalizacao.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/maplibre/maplibre-gl.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/maplibre/leaflet-maplibre-gl.js') }}"></script>
 <script src="{{ url_for('static', filename='js/icones_mapa.js') }}"></script>
 <script src="{{ url_for('static', filename='js/painel_hospital.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/orbis3d.js') }}"></script>
+<script>
+    // abas da lista: Todas / A caminho / Finalizadas
+    document.querySelectorAll('[data-abas="emg"] .aba').forEach((aba) => {
+        aba.addEventListener("click", () => {
+            aba.parentElement.querySelectorAll(".aba").forEach((a) => a.classList.toggle("ativa", a === aba));
+            document.querySelectorAll(".emg-card").forEach((c) => {
+                c.hidden = aba.dataset.filtro !== "todas" && c.dataset.situacao !== aba.dataset.filtro;
+            });
+        });
+    });
+</script>
 <script>
     iniciarPainelHospital({{ painel_json | safe }}, {
         urlProntuario: "{{ url_for('ocorrencia.prontuario', ocorrencia_id=0) }}",
+        urlModelos: "{{ url_for('static', filename='modelos/') }}",
     });
 </script>
 {% endblock %}

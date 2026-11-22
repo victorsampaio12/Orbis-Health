@@ -2,7 +2,7 @@
 <html lang="pt-br" class="{{ 'sidebar-collapsed' if preferencias.menu_recolhido }}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}OrbisHealth{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,12 +13,12 @@
     <link rel="dns-prefetch" href="https://a.tile.openstreetmap.org">
     <link rel="dns-prefetch" href="https://b.tile.openstreetmap.org">
     <link rel="dns-prefetch" href="https://c.tile.openstreetmap.org">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/acabamento.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap">
+    {# Um único sistema de design — tokens, componentes e telas em app.css #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 
     <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
-    <meta name="theme-color" content="#8c2b2b">
+    <meta name="theme-color" content="#ffffff">
     <link rel="icon" href="{{ url_for('static', filename='img/icon-192.png') }}">
     <!-- iOS Safari não lê o manifest para virar "app instalado" — precisa
          destas tags específicas para abrir em tela cheia sem barra do Safari. -->
@@ -27,6 +27,13 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="OrbisHealth">
 
+    {# three.js (local, em static/vendor) — usado pelos visores 3D (orbis3d.js) #}
+    <script type="importmap">
+        {"imports": {
+            "three": "{{ url_for('static', filename='vendor/three/build/three.module.min.js') }}",
+            "three/addons/": "{{ url_for('static', filename='vendor/three/examples/jsm/') }}"
+        }}
+    </script>
     {% block extra_head %}{% endblock %}
     <script>window.OrbisPrefs = {{ preferencias | tojson }};</script>
 </head>
@@ -49,6 +56,7 @@
     <script src="{{ url_for('static', filename='js/flash.js') }}"></script>
     <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
     <script src="{{ url_for('static', filename='js/acabamento.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/orbis.js') }}"></script>
     <script>
         if ("serviceWorker" in navigator) {
             window.addEventListener("load", () => {

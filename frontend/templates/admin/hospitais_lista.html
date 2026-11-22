@@ -1,15 +1,20 @@
 {% extends "app_base.html" %}
+{% import "_icons.html" as icons %}
 
 {% block title %}Hospitais - OrbisHealth{% endblock %}
 
 {% block app_content %}
 <div class="admin-page">
-    <div class="admin-page-header">
-        <h1>Hospitais</h1>
-        <a class="btn btn-primary" href="{{ url_for('admin.novo_hospital') }}">+ Novo hospital</a>
-    </div>
+    <header class="admin-page-header">
+        <div>
+            <h1>Hospitais</h1>
+            <p class="admin-subtitle">Hospitais de destino da rede. Só os ativos aparecem para os socorristas.</p>
+        </div>
+        <a class="btn btn-primary" href="{{ url_for('admin.novo_hospital') }}">{{ icons.icon("plus", 16) }} Novo hospital</a>
+    </header>
 
-    <table class="admin-table">
+    <div class="tabela-card">
+    <table class="admin-table tabela-hospitais">
         <thead>
             <tr>
                 <th>Nome</th>
@@ -52,5 +57,6 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
 </div>
 {% endblock %}

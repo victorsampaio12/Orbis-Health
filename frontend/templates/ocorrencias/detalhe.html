@@ -1,193 +1,337 @@
 {% extends "app_base.html" %}
 {% import "_icons.html" as icons %}
+{% import "_veiculos.html" as veiculos %}
+{% import "_jornada.html" as jornada %}
+{% import "_visor.html" as visor %}
 
 {% block title %}Ocorrência #{{ ocorrencia.id }} - OrbisHealth{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/maplibre/maplibre-gl.css') }}">
+{% endblock %}
+
+{# celular: em vez do cabeçalho, botões flutuando sobre o mapa (como no app) #}
+{% block cel_cabecalho %}
+{% set chat_no_mapa = ocorrencia.status.value == "em_transporte" and not ocorrencia.chat_encerrado_em %}
+<div class="cel-cab cel-cab-mapa">
+    <button type="button" class="cel-conta" data-cel-menu aria-label="Conta e menu">{{ current_user.nome | iniciais }}</button>
+    <span class="cel-codigo-mapa">{{ ocorrencia.id | codigo_emg }}</span>
+    {% if chat_no_mapa %}
+    <a class="cel-botao-icone" href="#chat-painel" aria-label="Chat com o hospital">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+    </a>
+    {% else %}
+    <span class="cel-botao-vazio" aria-hidden="true"></span>
+    {% endif %}
+</div>
 {% endblock %}
 
 {% block app_content %}
-{% set chat_ativo = ocorrencia.status.value == "em_transporte" and not ocorrencia.chat_encerrado_em %}
-{% set chat_disponivel = ocorrencia.hospital and (chat_ativo or ocorrencia.status.value == "finalizada") %}
-<div class="split-pane">
-    <div class="split-pane-list">
-        <div class="admin-page-header">
-            <h1>Ocorrência #{{ ocorrencia.id }}</h1>
-            {% if eh_dono and ocorrencia.status.value == "aberta" %}
-                <a class="btn btn-primary" href="{{ url_for('ocorrencia.hospitais', ocorrencia_id=ocorrencia.id) }}">
-                    Selecionar Hospital
-                </a>
-            {% endif %}
-        </div>
+{% set st = ocorrencia.status.value %}
+{% set chat_ativo = st == "em_transporte" and not ocorrencia.chat_encerrado_em %}
+{% set chat_disponivel = ocorrencia.hospital and (chat_ativo or st == "finalizada") %}
+{% set em_movimento = st == "em_transporte" and trajeto_estado == "em_andamento" %}
+{% set veiculo_nome = "Ambulância" if ocorrencia.veiculo.value == "ambulancia" else "Helicóptero" %}
+{% set no_trajeto = st == "em_transporte" and trajeto_estado in ["em_andamento", "concluido"] and not ocorrencia.chegada_confirmada_em %}
+{% set descricao_etapa -%}
+    {%- if st == "finalizada" -%}Atendimento finalizado
+    {%- elif ocorrencia.chegada_confirmada_em -%}Chegada confirmada · finalize o atendimento
+    {%- elif st == "em_transporte" and trajeto_estado == "concluido" -%}Você chegou · confirme a chegada
+    {%- elif st == "em_transporte" and trajeto_estado == "em_andamento" -%}A caminho do hospital
+    {%- elif st == "em_transporte" -%}Hospital avisado · inicie o trajeto
+    {%- elif pacientes -%}Escolha o hospital de destino
+    {%- else -%}Registre os pacientes e escolha o hospital
+    {%- endif -%}
+{%- endset %}
+<div class="split-pane palco">
+    <div id="mapa-ocorrencia" class="split-pane-map palco-mapa"></div>
 
-        <div class="ocorrencia-info-card">
-            <div>
-                <span class="info-label">Status</span>
-                <span class="status-badge status-{{ ocorrencia.status.value }}">
-                    {{ {"aberta": "Aberta", "em_transporte": "Em Transporte", "finalizada": "Finalizada"}[ocorrencia.status.value] }}
-                </span>
-            </div>
-            <div>
-                <span class="info-label">Veículo</span>
-                <span>{{ "Ambulância" if ocorrencia.veiculo.value == "ambulancia" else "Helicóptero" }}</span>
-            </div>
-            <div>
-                <span class="info-label">Local</span>
-                <span>{{ ocorrencia.local }}</span>
-            </div>
-            {% if ocorrencia.hospital %}
-            <div>
-                <span class="info-label">Hospital de destino</span>
-                <span>{{ ocorrencia.hospital.nome }}</span>
-            </div>
-            <div>
-                <span class="info-label">Tipo de rota</span>
-                <span>{{ "Linha reta" if ocorrencia.tipo_rota.value == "linha_reta" else "Terrestre" }}</span>
-            </div>
-            {% endif %}
-            {% if ocorrencia.distancia_estimada_km %}
-            <div>
-                <span class="info-label">Distância estimada</span>
-                <span id="distancia-estimada">{{ ocorrencia.distancia_estimada_km }} km</span>
-            </div>
-            <div>
-                <span class="info-label">Tempo estimado</span>
-                <span id="tempo-estimado">{{ ocorrencia.tempo_estimado_min }} min</span>
-            </div>
-            {% endif %}
-            {% if ocorrencia.comentarios %}
-            <div class="ocorrencia-info-full">
-                <span class="info-label">Comentários</span>
-                <span>{{ ocorrencia.comentarios }}</span>
-            </div>
-            {% endif %}
-        </div>
+    {% if ocorrencia.distancia_estimada_km and st != "finalizada" %}
+    {# pílula sobre o mapa: quanto falta (atualizada ao vivo) #}
+    <div class="eta-pilula{{ ' ativa' if em_movimento }}" aria-hidden="true">
+        <span class="eta-pilula-icone">{{ icons.icon("helicopter" if ocorrencia.veiculo.value == "helicoptero" else "ambulance", 18) }}</span>
+        <span class="eta-pilula-texto">
+            <strong data-eta-tempo>{{ ocorrencia.tempo_estimado_min | minutos }}</strong>
+            <small><span data-eta-dist>{{ ocorrencia.distancia_estimada_km | km }}</span> · {{ ocorrencia.hospital.nome if ocorrencia.hospital else "" }}</small>
+        </span>
+    </div>
+    {% endif %}
 
-        {% if eh_dono and ocorrencia.status.value == "em_transporte" and not ocorrencia.rota_geometria %}
-        <form method="POST" action="{{ url_for('ocorrencia.gerar_rota', ocorrencia_id=ocorrencia.id) }}">
-            <button type="submit" class="btn btn-primary btn-block" id="btn-gerar-rota"
-                    {{ "disabled" if not ocorrencia.latitude_atual }}>
-                Gerar Rota
-            </button>
-        </form>
-        {% if not ocorrencia.latitude_atual %}
-        <p class="campo-hint" id="sem-localizacao-hint">Aguardando localização para liberar a geração de rota...</p>
-        {% endif %}
-        {% endif %}
+    <div class="split-pane-list painel-flutuante painel-esquerdo">
 
-        {% if not eh_dono and ocorrencia.status.value == "em_transporte" %}
-        <p class="aviso-rastreamento" id="aviso-rastreamento" hidden>
-            Aguardando atualização de localização do socorrista
-        </p>
-        {% endif %}
+        {# folha branca do celular (no desktop, display: contents — não muda nada) #}
+        <div class="oc-folha">
+        {# 1 · quem é esta ocorrência #}
+        <header class="oc-topo">
+            {{ visor.veiculo3d(ocorrencia.veiculo.value, movimento=em_movimento, classe="oc-visor", interativo=true,
+                               id="oc-visor", azimute=35, elevacao=14, folga=0.66, uid="topo") }}
+            <div class="oc-topo-info">
+                <div class="oc-topo-linha">
+                    <span class="oc-codigo">{{ ocorrencia.id | codigo_emg }}</span>
+                    <span class="status-badge status-{{ st }}">
+                        {{ {"aberta": "Aberta", "em_transporte": "Em transporte", "finalizada": "Finalizada"}[st] }}
+                    </span>
+                    <span class="cel-so cel-pilula">{{ icons.icon("helicopter" if ocorrencia.veiculo.value == "helicoptero" else "ambulance", 13) }} {{ veiculo_nome }}</span>
+                </div>
+                <h1>Ocorrência #{{ ocorrencia.id }}</h1>
+                <p class="oc-topo-local">{{ icons.icon("map-pin", 14) }} <span><span class="oc-local-texto">{{ ocorrencia.local }}</span><span class="oc-local-veiculo"> · {{ veiculo_nome }}</span></span></p>
+                <p class="cel-so oc-descricao">{{ descricao_etapa }}</p>
+            </div>
+        </header>
 
-        {% if eh_dono and ocorrencia.status.value == "em_transporte" %}
-            {% if not ocorrencia.chegada_confirmada_em %}
+        {# 2 · em que ponto da história ela está #}
+        {{ jornada.jornada(ocorrencia, trajeto_estado) }}
+
+        {# 3 · o que fazer agora (só para quem conduz o atendimento) #}
+        {% if eh_dono and st != "finalizada" %}
+        <section class="proximo-passo">
+            <span class="proximo-passo-rotulo">Próximo passo</span>
+            {% if st == "aberta" %}
+                <h2>Escolha o hospital de destino</h2>
+                <p>Registre os pacientes e selecione um hospital compatível com {{ 'a ambulância' if ocorrencia.veiculo.value == 'ambulancia' else 'o helicóptero' }}. O hospital é avisado na hora.</p>
+                <div class="proximo-passo-acoes">
+                    <a class="btn btn-primary" href="{{ url_for('ocorrencia.hospitais', ocorrencia_id=ocorrencia.id) }}">
+                        Selecionar Hospital {{ icons.icon("arrow-right", 16) }}
+                    </a>
+                </div>
+            {% elif ocorrencia.chegada_confirmada_em %}
+                <h2>Registre o desfecho</h2>
+                <p>A chegada foi confirmada. Descreva como terminou o atendimento para encerrar a ocorrência.</p>
+                <form method="POST" action="{{ url_for('ocorrencia.finalizar', ocorrencia_id=ocorrencia.id) }}" class="admin-form finalizar-form">
+                    <label for="desfecho">Desfecho do atendimento</label>
+                    <div class="cel-so cel-sugestoes" role="group" aria-label="Sugestões de desfecho">
+                        {% for s in ["Paciente internado", "Atendido e liberado", "Encaminhado à sala vermelha", "Transferido para UTI"] %}
+                        <button type="button" class="cel-sugestao" data-desfecho="{{ s }}">{{ s }}</button>
+                        {% endfor %}
+                    </div>
+                    <textarea id="desfecho" name="desfecho" rows="3" required></textarea>
+                    <button type="submit" class="btn btn-primary">Finalizar ocorrência</button>
+                </form>
+            {% else %}
+                {% if not ocorrencia.rota_geometria %}
+                    <h2>Gere a rota até o hospital</h2>
+                    <p>Calculamos o melhor caminho até {{ ocorrencia.hospital.nome }} a partir da sua localização.</p>
+                {% elif trajeto_estado == "nao_iniciado" %}
+                    <h2>Inicie o trajeto</h2>
+                    <p>A rota está pronta. Ao iniciar, o hospital passa a acompanhar sua posição em tempo real.</p>
+                {% elif trajeto_estado == "em_andamento" %}
+                    <h2>A caminho de {{ ocorrencia.hospital.nome }}</h2>
+                    <p>O hospital acompanha sua posição. Quando estiver perto, confirme a chegada.</p>
+                {% else %}
+                    <h2>Confirme a chegada</h2>
+                    <p>O trajeto terminou. Confirme a chegada quando o botão aparecer.</p>
+                {% endif %}
+                <div class="proximo-passo-acoes">
+                    {% if not ocorrencia.rota_geometria %}
+                    <form method="POST" action="{{ url_for('ocorrencia.gerar_rota', ocorrencia_id=ocorrencia.id) }}">
+                        <button type="submit" class="btn btn-primary" id="btn-gerar-rota"
+                                {{ "disabled" if not ocorrencia.latitude_atual }}>
+                            Gerar Rota {{ icons.icon("navigation", 16) }}
+                        </button>
+                    </form>
+                    {% else %}
+                    <button type="button" class="btn btn-primary" id="btn-iniciar-trajeto"
+                            data-url="{{ url_for('ocorrencia.iniciar_trajeto', ocorrencia_id=ocorrencia.id) }}"
+                            {{ "disabled" if trajeto_estado != "nao_iniciado" }}>
+                        {{ {"nao_iniciado": "Iniciar Trajeto", "em_andamento": "Trajeto em andamento...", "concluido": "Trajeto concluído"}[trajeto_estado] }}
+                    </button>
+                    {% endif %}
+                    <form method="POST" action="{{ url_for('ocorrencia.marcar_chegada', ocorrencia_id=ocorrencia.id) }}"
+                          id="form-notificar-chegada" hidden>
+                        <button type="submit" class="btn btn-primary">Notificar chegada</button>
+                    </form>
+                    {% if trajeto_estado == "nao_iniciado" %}
+                    {# Enquanto o trajeto não começou, dá para desistir deste hospital e escolher outro. #}
+                    {% set aviso_voltar = "Voltar para a lista de hospitais? O " ~ ocorrencia.hospital.nome
+                        ~ " será avisado de que a emergência não vai mais para lá."
+                        ~ (" As mensagens já trocadas com ele no chat serão apagadas." if ocorrencia.mensagens else "") %}
+                    <form method="POST" action="{{ url_for('ocorrencia.trocar_hospital', ocorrencia_id=ocorrencia.id) }}"
+                          id="form-voltar-hospitais"
+                          onsubmit='return confirm({{ aviso_voltar | tojson }});'>
+                        <button type="submit" class="btn btn-ghost btn-voltar" title="Desfazer a escolha do hospital e voltar para a lista">
+                            {{ icons.icon("chevron-left", 16) }} <span class="so-desk">Voltar</span><span class="cel-so">Trocar hospital</span>
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% if not ocorrencia.rota_geometria and not ocorrencia.latitude_atual %}
+                <p class="campo-hint" id="sem-localizacao-hint">Aguardando localização para liberar a geração de rota...</p>
+                {% endif %}
                 {% if ocorrencia.rota_geometria %}
-                <button type="button" class="btn btn-primary btn-block" id="btn-iniciar-trajeto"
-                        data-url="{{ url_for('ocorrencia.iniciar_trajeto', ocorrencia_id=ocorrencia.id) }}"
-                        {{ "disabled" if trajeto_estado != "nao_iniciado" }}>
-                    {{ {"nao_iniciado": "Iniciar Trajeto", "em_andamento": "Trajeto em andamento...", "concluido": "Trajeto concluído"}[trajeto_estado] }}
-                </button>
                 <p class="trajeto-status" id="trajeto-status" {{ "hidden" if trajeto_estado == "nao_iniciado" }}>
                     {{ "Trajeto concluído — confirme a chegada quando o botão aparecer." if trajeto_estado == "concluido" else "Trajeto em andamento — acompanhe no mapa." }}
                 </p>
                 {% endif %}
-                {% if trajeto_estado == "nao_iniciado" %}
-                {# Enquanto o trajeto não começou, dá para desistir deste hospital e escolher outro. #}
-                {% set aviso_voltar = "Voltar para a lista de hospitais? O " ~ ocorrencia.hospital.nome
-                    ~ " será avisado de que a emergência não vai mais para lá."
-                    ~ (" As mensagens já trocadas com ele no chat serão apagadas." if ocorrencia.mensagens else "") %}
-                <form method="POST" action="{{ url_for('ocorrencia.trocar_hospital', ocorrencia_id=ocorrencia.id) }}"
-                      id="form-voltar-hospitais"
-                      onsubmit='return confirm({{ aviso_voltar | tojson }});'>
-                    <button type="submit" class="btn btn-secondary btn-block btn-voltar" title="Desfazer a escolha do hospital e voltar para a lista">
-                        {{ icons.icon("chevron-left", 16) }} Voltar
-                    </button>
-                </form>
-                {% endif %}
-                <form method="POST" action="{{ url_for('ocorrencia.marcar_chegada', ocorrencia_id=ocorrencia.id) }}"
-                      id="form-notificar-chegada" hidden>
-                    <button type="submit" class="btn btn-primary btn-block">Notificar chegada</button>
-                </form>
-            {% else %}
-            <form method="POST" action="{{ url_for('ocorrencia.finalizar', ocorrencia_id=ocorrencia.id) }}" class="admin-form finalizar-form">
-                <label for="desfecho">Desfecho do atendimento</label>
-                <textarea id="desfecho" name="desfecho" rows="3" required></textarea>
-                <button type="submit" class="btn btn-primary btn-block">Finalizar ocorrência</button>
-            </form>
             {% endif %}
+        </section>
+        {% elif not eh_dono and st == "em_transporte" %}
+        <section class="proximo-passo proximo-passo-neutro">
+            <span class="proximo-passo-rotulo">Acompanhamento</span>
+            <h2>{{ "Viatura a caminho" if em_movimento else "Aguardando o trajeto" }}</h2>
+            <p>A posição do socorrista e a previsão de chegada atualizam sozinhas nesta tela.</p>
+            <p class="aviso-rastreamento" id="aviso-rastreamento" hidden>
+                Aguardando atualização de localização do socorrista
+            </p>
+        </section>
+        {% elif st == "finalizada" %}
+        <section class="proximo-passo proximo-passo-concluido">
+            <span class="proximo-passo-rotulo">Atendimento concluído</span>
+            <h2>Ocorrência encerrada</h2>
+            {% if ocorrencia.desfecho %}<p>{{ ocorrencia.desfecho }}</p>{% endif %}
+            <div class="proximo-passo-acoes">
+                <a class="btn btn-secondary" href="{{ url_for('ocorrencia.relatorio', ocorrencia_id=ocorrencia.id) }}">
+                    {{ icons.icon("file-text", 16) }} Ver relatório final
+                </a>
+            </div>
+        </section>
         {% endif %}
 
-        {% if ocorrencia.status.value == "finalizada" %}
-        <a class="btn btn-secondary btn-block" href="{{ url_for('ocorrencia.relatorio', ocorrencia_id=ocorrencia.id) }}">
-            Ver relatório final
-        </a>
+        {# 4 · ao vivo: quanto falta #}
+        {% if ocorrencia.distancia_estimada_km %}
+        {% set pct = ((progresso or 0) * 100) | round(1) %}
+        <section class="painel-vivo{{ ' ativo' if em_movimento }}" data-progresso-trajeto style="--progresso: {{ pct }}%">
+            <header class="painel-vivo-topo">
+                <span class="painel-vivo-titulo">
+                    {% if em_movimento %}<span class="ao-vivo"></span> Ao vivo
+                    {% elif st == "finalizada" or ocorrencia.chegada_confirmada_em %}Chegou ao destino
+                    {% else %}Estimativa{% endif %}
+                </span>
+                {% if ocorrencia.hospital %}<span class="painel-vivo-destino">{{ icons.icon("building-2", 14) }} {{ ocorrencia.hospital.nome }}</span>{% endif %}
+            </header>
+            <div class="painel-vivo-numeros">
+                <div>
+                    <span class="info-label">Tempo estimado</span>
+                    <strong id="tempo-estimado">{{ ocorrencia.tempo_estimado_min | minutos }}</strong>
+                </div>
+                <div>
+                    <span class="info-label">Distância</span>
+                    <strong id="distancia-estimada">{{ ocorrencia.distancia_estimada_km | km }}</strong>
+                </div>
+                <div>
+                    <span class="info-label">Percorrido</span>
+                    <strong id="progresso-pct">{{ pct | int }}%</strong>
+                </div>
+            </div>
+            <div class="trilha" aria-hidden="true">
+                <span class="trilha-feito"></span>
+                <span class="trilha-veiculo">
+                    <span class="deitado">{{ veiculos.veiculo(ocorrencia.veiculo.value, 34, ativo=em_movimento, uid="trilha") }}</span>
+                </span>
+                <span class="trilha-fim">{{ icons.icon("building-2", 12) }}</span>
+            </div>
+        </section>
         {% endif %}
 
+        {# celular: hospital de destino em linha, como no app (fora do trajeto) #}
+        {% if ocorrencia.hospital and not no_trajeto %}
+        <div class="cel-so oc-hospital">
+            <span class="oc-hospital-icone">{{ icons.icon("building-2", 18) }}</span>
+            <div class="oc-hospital-info">
+                <strong>{{ ocorrencia.hospital.nome }}</strong>
+                <small>{{ ocorrencia.hospital.endereco }}</small>
+            </div>
+            {% if ocorrencia.tempo_estimado_min and st != "finalizada" and not ocorrencia.chegada_confirmada_em %}
+            <div class="oc-hospital-eta">
+                <strong data-eta-tempo>{{ ocorrencia.tempo_estimado_min | minutos }}</strong>
+                <small data-eta-dist>{{ ocorrencia.distancia_estimada_km | km }}</small>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        </div>{# /.oc-folha #}
+
+        {# 5 · detalhes #}
+        {% if ocorrencia.hospital or ocorrencia.comentarios %}
+        <section class="cartao oc-detalhes">
+            <h2 class="cartao-titulo">Detalhes</h2>
+            <dl class="ocorrencia-info-card">
+                {% if ocorrencia.hospital %}
+                <div><dt class="info-label">Hospital de destino</dt><dd>{{ ocorrencia.hospital.nome }}</dd></div>
+                <div><dt class="info-label">Tipo de rota</dt><dd>{{ "Linha reta" if ocorrencia.tipo_rota.value == "linha_reta" else "Terrestre" }}</dd></div>
+                {% endif %}
+                {% if ocorrencia.comentarios %}
+                <div class="ocorrencia-info-full"><dt class="info-label">Comentários</dt><dd>{{ ocorrencia.comentarios }}</dd></div>
+                {% endif %}
+            </dl>
+        </section>
+        {% endif %}
+
+        {# 6 · conversa com o outro lado #}
         {% if chat_ativo %}
-        <div class="admin-page-header">
-            <h2>Chat com {{ "o hospital" if eh_dono else "o socorrista" }}</h2>
-        </div>
-        <div class="chat-painel" id="chat-painel">
-            <div class="chat-mensagens" id="chat-mensagens"></div>
-            <form class="chat-form" id="chat-form">
-                <input type="text" id="chat-input" placeholder="Digite sua mensagem..." autocomplete="off" required>
-                <button type="submit" class="btn btn-primary">Enviar</button>
-            </form>
-        </div>
+        <section class="cartao cartao-chat">
+            <h2 class="cartao-titulo">Chat com {{ "o hospital" if eh_dono else "o socorrista" }}</h2>
+            <div class="chat-painel" id="chat-painel">
+                <div class="chat-mensagens" id="chat-mensagens"></div>
+                <form class="chat-form" id="chat-form">
+                    <input type="text" id="chat-input" aria-label="Mensagem" placeholder="Escreva uma mensagem..." autocomplete="off" required>
+                    <button type="submit" class="btn btn-primary" aria-label="Enviar">{{ icons.icon("send", 16) }} Enviar</button>
+                </form>
+            </div>
+        </section>
         {% elif chat_disponivel %}
         <a class="btn btn-secondary btn-block" href="{{ url_for('inbox.conversa', ocorrencia_id=ocorrencia.id) }}">
-            Ver histórico do chat
+            {{ icons.icon("inbox", 16) }} Ver histórico do chat
         </a>
         {% endif %}
 
-        <div class="admin-page-header">
-            <h2>Pacientes</h2>
-            {% if eh_dono %}
-                <a class="btn btn-primary" href="{{ url_for('ocorrencia.pacientes', ocorrencia_id=ocorrencia.id) }}">
-                    Gerenciar pacientes
-                </a>
-            {% endif %}
+        {# 7 · quem está sendo atendido #}
+        <section class="cartao oc-pacientes">
+            <header class="cartao-topo">
+                <h2 class="cartao-titulo">Pacientes <span class="contagem">{{ pacientes | length }}</span></h2>
+                {% if eh_dono and st != "finalizada" %}
+                <a class="cel-so cel-adicionar" href="{{ url_for('ocorrencia.novo_paciente', ocorrencia_id=ocorrencia.id) }}">{{ icons.icon("plus", 17) }} Adicionar</a>
+                {% endif %}
+                <div class="cartao-acoes">
+                    {% if pacientes %}
+                        <a class="btn btn-secondary btn-sm" href="{{ url_for('ocorrencia.prontuario', ocorrencia_id=ocorrencia.id) }}">
+                            Ver pré-prontuário
+                        </a>
+                    {% endif %}
+                    {% if eh_dono %}
+                        <a class="btn btn-primary btn-sm" href="{{ url_for('ocorrencia.pacientes', ocorrencia_id=ocorrencia.id) }}">
+                            Gerenciar pacientes
+                        </a>
+                    {% endif %}
+                </div>
+            </header>
             {% if pacientes %}
-                <a class="btn btn-secondary" href="{{ url_for('ocorrencia.prontuario', ocorrencia_id=ocorrencia.id) }}">
-                    Ver pré-prontuário
-                </a>
-            {% endif %}
-        </div>
-
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Idade</th>
-                    <th>Prioridade</th>
-                    <th>Diagnóstico</th>
-                </tr>
-            </thead>
-            <tbody>
+            <ul class="lista-pacientes">
                 {% for paciente in pacientes %}
-                <tr>
-                    <td>{{ paciente.nome }}</td>
-                    <td>{{ paciente.idade or "-" }}</td>
-                    <td>
-                        <span class="priority-badge priority-{{ paciente.prioridade.value }}">
-                            {{ {"critica": "Crítica", "alta": "Alta", "media": "Média"}[paciente.prioridade.value] }}
-                        </span>
-                    </td>
-                    <td>{{ paciente.diagnostico or "-" }}</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="4">Nenhum paciente cadastrado ainda.</td>
-                </tr>
+                <li>
+                    {% if eh_dono and st != "finalizada" %}
+                    <a class="cel-so cel-esticado" href="{{ url_for('ocorrencia.editar_paciente', ocorrencia_id=ocorrencia.id, paciente_id=paciente.id) }}" aria-label="Prontuário de {{ paciente.nome }}"></a>
+                    {% endif %}
+                    <span class="avatar avatar-sm">{{ paciente.nome | iniciais }}</span>
+                    <div class="lista-pacientes-info">
+                        <strong>{{ paciente.nome }}</strong>
+                        <small>{{ (paciente.idade ~ " anos") if paciente.idade else "Idade não informada" }} · {{ paciente.diagnostico or "Sem diagnóstico" }}</small>
+                    </div>
+                    <span class="priority-badge priority-{{ paciente.prioridade.value }}">
+                        {{ {"critica": "Crítica", "alta": "Alta", "media": "Média"}[paciente.prioridade.value] }}
+                    </span>
+                </li>
                 {% endfor %}
-            </tbody>
-        </table>
+            </ul>
+            {% else %}
+            <p class="vazio">Nenhum paciente cadastrado ainda.</p>
+            <div class="cel-so cel-vazio">
+                <span class="cel-vazio-icone">{{ icons.icon("user-round", 24) }}</span>
+                <strong>Nenhum paciente registrado</strong>
+                <p>O hospital de destino vê o pré-prontuário e as fotos antes do paciente chegar.</p>
+            </div>
+            {% endif %}
+        </section>
+
+        {# celular: comentários num cartão próprio, depois dos pacientes (como no app) #}
+        {% if ocorrencia.comentarios %}
+        <section class="cel-so cartao oc-comentarios">
+            <span class="info-label">Comentários</span>
+            <p>{{ ocorrencia.comentarios }}</p>
+        </section>
+        {% endif %}
     </div>
 
-    <div id="mapa-ocorrencia" class="split-pane-map"></div>
 </div>
 {% endblock %}
 
@@ -201,8 +345,20 @@
 <script>
     var MAPA_OCORRENCIA_DADOS = {{ mapa_dados_json | safe }};
 </script>
+<script src="{{ url_for('static', filename='vendor/maplibre/maplibre-gl.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/maplibre/leaflet-maplibre-gl.js') }}"></script>
 <script src="{{ url_for('static', filename='js/icones_mapa.js') }}"></script>
 <script src="{{ url_for('static', filename='js/mapa_ocorrencia.js') }}"></script>
+{{ visor.script() }}
+<script>
+    // Sugestões de desfecho (só aparecem no celular): tocar preenche o campo.
+    document.querySelectorAll("[data-desfecho]").forEach((b) => b.addEventListener("click", () => {
+        const campo = document.getElementById("desfecho");
+        if (!campo) return;
+        campo.value = b.dataset.desfecho;
+        document.querySelectorAll("[data-desfecho]").forEach((x) => x.classList.toggle("ativa", x === b));
+    }));
+</script>
 {% if eh_dono and not ocorrencia.latitude_atual %}
 <script>
     iniciarCapturaLocalizacaoOcorrencia("{{ url_for('ocorrencia.salvar_localizacao', ocorrencia_id=ocorrencia.id) }}");

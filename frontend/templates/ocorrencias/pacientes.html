@@ -1,34 +1,56 @@
 {% extends "app_base.html" %}
+{% import "_icons.html" as icons %}
+{% import "_jornada.html" as jornada %}
 
 {% block title %}Pacientes - OrbisHealth{% endblock %}
 
+{% block cel_voltar %}{{ url_for('ocorrencia.ver', ocorrencia_id=ocorrencia.id) }}{% endblock %}
+{% block cel_titulo %}Pacientes{% endblock %}
+{% block cel_sub %}{{ ocorrencia.id | codigo_emg }} · {{ ocorrencia.local }}{% endblock %}
+
 {% block app_content %}
 <div class="admin-page">
-    <div class="admin-page-header">
-        <h1>Cadastro de Emergência</h1>
+    <header class="admin-page-header">
+        <div>
+            <span class="sobre">{{ ocorrencia.id | codigo_emg }} · {{ ocorrencia.local }}</span>
+            <h1>Cadastro de Emergência</h1>
+            <p class="admin-subtitle">Quem está sendo atendido. O hospital de destino vê estes dados no pré-prontuário.</p>
+        </div>
         <a class="btn btn-primary" href="{{ url_for('ocorrencia.novo_paciente', ocorrencia_id=ocorrencia.id) }}">
-            + Adicionar paciente
+            {{ icons.icon("plus", 16) }} Adicionar paciente
         </a>
-    </div>
+    </header>
+
+    {{ jornada.jornada(ocorrencia) }}
 
     <div class="paciente-cards">
         {% for paciente in pacientes %}
-        <div class="paciente-card">
+        <article class="paciente-card">
             <div class="paciente-card-header">
-                <h2>{{ paciente.nome }}</h2>
+                <span class="avatar">{{ paciente.nome | iniciais }}</span>
+                <div>
+                    <h2>{{ paciente.nome }}</h2>
+                    <small>{{ (paciente.idade ~ " anos") if paciente.idade else "Idade não informada" }}</small>
+                </div>
                 <span class="priority-badge priority-{{ paciente.prioridade.value }}">
                     {{ {"critica": "Crítica", "alta": "Alta", "media": "Média"}[paciente.prioridade.value] }}
                 </span>
             </div>
             <p class="paciente-card-info">{{ paciente.motivo_chamado }}</p>
-            <a class="btn btn-primary btn-block"
+            <a class="btn btn-secondary btn-block"
                href="{{ url_for('ocorrencia.editar_paciente', ocorrencia_id=ocorrencia.id, paciente_id=paciente.id) }}">
-                Prontuário Médico
+                {{ icons.icon("file-text", 16) }} Prontuário Médico
             </a>
-        </div>
+        </article>
         {% else %}
-        <p>Nenhum paciente cadastrado ainda.</p>
+        <div class="estado-vazio">
+            <span class="estado-vazio-icone">{{ icons.icon("user-round", 22) }}</span>
+            <strong>Nenhum paciente cadastrado ainda.</strong>
+            <p>Comece pelo nome e pelo motivo do chamado — os sinais vitais podem vir depois.</p>
+        </div>
         {% endfor %}
     </div>
+
+    <a class="link-voltar" href="{{ url_for('ocorrencia.ver', ocorrencia_id=ocorrencia.id) }}">{{ icons.icon("chevron-left", 16) }} Voltar à ocorrência</a>
 </div>
 {% endblock %}

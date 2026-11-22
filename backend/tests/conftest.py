@@ -49,6 +49,7 @@ TEST_ENV = {
     "MAX_LOGIN_ATTEMPTS": "5",
     "LOGIN_LOCKOUT_MINUTES": "15",
     "UPLOAD_FOLDER": UPLOADS_TESTE,  # fotos dos testes não vão pra backend/uploads
+    "MODO_DEMONSTRACAO": "1",  # libera /demo (test_6_modo_demonstracao.py)
 }
 
 VIEWPORT = {"width": 1600, "height": 1800}

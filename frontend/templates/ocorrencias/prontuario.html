@@ -1,5 +1,6 @@
 {% extends "app_base.html" %}
 {% import "_icons.html" as icons %}
+{% import "_visor.html" as visor %}
 
 {% block title %}Pré-prontuário {{ ocorrencia.id | codigo_emg }} - OrbisHealth{% endblock %}
 
@@ -10,13 +11,25 @@
 </div>
 {% endmacro %}
 
+{# sinal vital com faixa de referência: o que está fora fica sinalizado #}
+{% macro vital(rotulo, tipo, valor, unidade="") %}
+{% set estado, ref = avaliar_vital(tipo, valor) %}
+<div class="vital{{ ' vital-' ~ estado if estado }}">
+    <span class="vital-rotulo">{{ rotulo }}
+        {% if estado in ("alto", "baixo") %}<em class="vital-flag">{{ "Alterado" if tipo == "glasgow" else ("Alto" if estado == "alto" else "Baixo") }}</em>{% endif %}
+    </span>
+    <span class="vital-valor">{% if valor is none or valor == "" %}—{% else %}{{ valor | decimal if tipo == "temp" else valor }}<small>{{ unidade }}</small>{% endif %}</span>
+    {% if ref %}<span class="vital-ref">Ref. {{ ref }}{{ unidade if tipo != "pa" }}</span>{% endif %}
+</div>
+{% endmacro %}
+
 {% block app_content %}
 <div class="admin-page admin-page-largo">
     <div class="admin-page-header">
         <div>
-            <h1>Pré-prontuário de Atendimento</h1>
+            <h1>Pré-prontuário de atendimento</h1>
             <p class="admin-subtitle">
-                {{ ocorrencia.id | codigo_emg }} — {{ "Ambulância" if ocorrencia.veiculo.value == "ambulancia" else "Helicóptero" }}
+                <span class="mono">{{ ocorrencia.id | codigo_emg }}</span> — {{ "Ambulância" if ocorrencia.veiculo.value == "ambulancia" else "Helicóptero" }}
                 · {{ ocorrencia.local }}
             </p>
         </div>
@@ -25,6 +38,21 @@
 
     {% for paciente in pacientes %}
     <section class="prontuario-paciente">
+        {% set regioes = paciente.regioes_lesao_lista %}
+        <aside class="prontuario-corpo">
+            {{ visor.corpo3d(regioes) }}
+            <div class="prontuario-corpo-legenda">
+                <span class="info-label">Regiões com lesão</span>
+                {% if regioes %}
+                <div class="prontuario-chips">
+                    {% for r in regioes %}<span class="regiao-marcada">{{ REGIOES_LESAO[r] }}</span>{% endfor %}
+                </div>
+                {% else %}
+                <p class="prontuario-vazio">Nenhuma região marcada.</p>
+                {% endif %}
+            </div>
+        </aside>
+        <div class="prontuario-conteudo">
         <div class="prontuario-paciente-topo">
             <h2>{{ paciente.nome }}</h2>
             <span class="priority-badge priority-{{ paciente.prioridade.value }}">
@@ -43,13 +71,15 @@
         <p class="prontuario-texto">{{ paciente.motivo_chamado }}</p>
 
         <h3>Sinais vitais</h3>
-        <div class="prontuario-grid">
-            {{ campo("Pressão arterial", paciente.pressao_arterial) }}
-            {{ campo("Frequência cardíaca", paciente.frequencia_cardiaca, " bpm") }}
-            {{ campo("Frequência respiratória", paciente.frequencia_respiratoria, " irpm") }}
-            {{ campo("Saturação O₂", paciente.saturacao_o2, "%") }}
-            {{ campo("Temperatura", paciente.temperatura, " °C") }}
-            {{ campo("Glasgow", paciente.glasgow) }}
+        <div class="vitais-grid">
+            {{ vital("PA", "pa", paciente.pressao_arterial, " mmHg") }}
+            {{ vital("FC", "fc", paciente.frequencia_cardiaca, " bpm") }}
+            {{ vital("FR", "fr", paciente.frequencia_respiratoria, " irpm") }}
+            {{ vital("SpO₂", "spo2", paciente.saturacao_o2, "%") }}
+            {{ vital("Temp.", "temp", paciente.temperatura, " °C") }}
+            {{ vital("Glasgow", "glasgow", paciente.glasgow) }}
+        </div>
+        <div class="prontuario-grid prontuario-grid-1">
             {{ campo("Nível de consciência", paciente.nivel_consciencia) }}
         </div>
 
@@ -88,6 +118,7 @@
         {% else %}
         <p class="prontuario-vazio">Nenhuma foto anexada.</p>
         {% endif %}
+        </div>
     </section>
     {% else %}
     <p class="placeholder-page">Nenhum paciente cadastrado nesta ocorrência ainda.</p>
@@ -97,4 +128,5 @@
 
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/anexos.js') }}"></script>
+{{ visor.script() }}
 {% endblock %}

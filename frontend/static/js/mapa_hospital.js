@@ -12,13 +12,10 @@ function iniciarMapaHospital(opcoes) {
 
     const mapa = L.map("mapa-hospital").setView(
         temPosicaoInicial ? [opcoes.latitudeInicial, opcoes.longitudeInicial] : CENTRO_PADRAO,
-        temPosicaoInicial ? 15 : 4
+        temPosicaoInicial ? 15 : 10
     );
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; colaboradores do OpenStreetMap",
-        maxZoom: 19,
-    }).addTo(mapa);
+    window.OrbisIcones.camadaBase().addTo(mapa);
 
     const enderecoInput = document.getElementById("endereco");
     const listaSugestoes = document.getElementById("endereco-sugestoes");
@@ -33,7 +30,7 @@ function iniciarMapaHospital(opcoes) {
         if (marcador) {
             marcador.setLatLng([lat, lng]);
         } else {
-            marcador = L.marker([lat, lng], { draggable: true }).addTo(mapa);
+            marcador = L.marker([lat, lng], { draggable: true, title: "Posição do hospital (arraste para ajustar)" }).addTo(mapa);
             marcador.on("dragend", () => {
                 const posicao = marcador.getLatLng();
                 latInput.value = posicao.lat;

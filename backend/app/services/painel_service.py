@@ -4,10 +4,12 @@ JS do painel não precisam conhecer os models."""
 
 import json
 
-from app.models.ocorrencia import StatusOcorrenciaEnum
+from sqlalchemy import func
+
+from app.models.ocorrencia import Ocorrencia, StatusOcorrenciaEnum
 from app.services import ocorrencia_service, rota_service, trajeto_service
 
-ROTULO_ATENDIMENTO = "Em Atendimento"
+ROTULO_ATENDIMENTO = "Em atendimento"
 ROTULO_PENDENTE = "Pendente"
 ROTULO_FINALIZADA = "Finalizada"
 
@@ -24,14 +26,27 @@ def status_rotulo(ocorrencia):
     return "pendente", ROTULO_PENDENTE
 
 
+# O painel é a operação do momento: todas as ativas + as últimas finalizadas.
+# O histórico completo fica na tela "Histórico de emergências" (paginada).
+# Sem esse limite, um hospital com 10 mil atendimentos levava 21 s e 42 MB
+# para abrir o painel (Plano de Testes, 7.2.8 Volume).
+FINALIZADAS_NO_PAINEL = 30
+
+
 def montar_emergencias(hospital):
-    """Todas as ocorrências deste hospital (RN-007), ativas primeiro."""
-    ocorrencias = ocorrencia_service.listar_ocorrencias_hospital(hospital)
-    ativas = [o for o in ocorrencias if o.status != StatusOcorrenciaEnum.finalizada]
-    finalizadas = sorted(
-        (o for o in ocorrencias if o.status == StatusOcorrenciaEnum.finalizada),
-        key=lambda o: o.finalizado_em or o.criado_em,
-        reverse=True,
+    """Ocorrências deste hospital (RN-007): ativas primeiro, depois as
+    FINALIZADAS_NO_PAINEL finalizadas mais recentes."""
+    da_casa = Ocorrencia.query.filter(Ocorrencia.hospital_id == hospital.id)
+    ativas = (
+        da_casa.filter(Ocorrencia.status != StatusOcorrenciaEnum.finalizada)
+        .order_by(Ocorrencia.criado_em.desc())
+        .all()
+    )
+    finalizadas = (
+        da_casa.filter(Ocorrencia.status == StatusOcorrenciaEnum.finalizada)
+        .order_by(func.coalesce(Ocorrencia.finalizado_em, Ocorrencia.criado_em).desc())
+        .limit(FINALIZADAS_NO_PAINEL)
+        .all()
     )
 
     emergencias = []

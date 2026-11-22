@@ -10,12 +10,27 @@ class PrioridadeEnum(enum.Enum):
     media = "media"
 
 
+# código -> rótulo, na ordem em que aparecem (de cima para baixo)
+REGIOES_LESAO = {
+    "cabeca": "Cabeça",
+    "pescoco": "Pescoço",
+    "torax": "Tórax",
+    "abdome": "Abdome",
+    "pelve": "Pelve",
+    "coluna": "Coluna",
+    "braco_direito": "Braço direito",
+    "braco_esquerdo": "Braço esquerdo",
+    "perna_direita": "Perna direita",
+    "perna_esquerda": "Perna esquerda",
+}
+
+
 class Paciente(db.Model):
     __tablename__ = "paciente"
 
     id = db.Column(db.Integer, primary_key=True)
     ocorrencia_id = db.Column(
-        db.Integer, db.ForeignKey("ocorrencia.id"), nullable=False
+        db.Integer, db.ForeignKey("ocorrencia.id"), nullable=False, index=True
     )
 
     # Dados do paciente
@@ -46,6 +61,11 @@ class Paciente(db.Model):
 
     diagnostico = db.Column(db.Text, nullable=True)
 
+    # Regiões do corpo com lesão, marcadas no boneco 3D do cadastro e
+    # destacadas para o hospital no pré-prontuário. Lista separada por
+    # vírgula com os códigos de REGIOES_LESAO (ordem canônica).
+    regioes_lesao = db.Column(db.String(200), nullable=True)
+
     # RN-010: calculada em toda criação/atualização, nunca digitada.
     prioridade = db.Column(
         db.Enum(PrioridadeEnum, name="prioridade_enum"),
@@ -65,3 +85,7 @@ class Paciente(db.Model):
         cascade="all, delete-orphan",
         order_by="AnexoPaciente.criado_em",
     )
+
+    @property
+    def regioes_lesao_lista(self):
+        return [r for r in (self.regioes_lesao or "").split(",") if r in REGIOES_LESAO]

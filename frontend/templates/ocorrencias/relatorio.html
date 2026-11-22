@@ -1,10 +1,50 @@
 {% extends "app_base.html" %}
+{% import "_icons.html" as icons %}
 
 {% block title %}Relatório - Ocorrência #{{ ocorrencia.id }} - OrbisHealth{% endblock %}
 
+{# celular: tela de "atendimento finalizado" do app, sem cabeçalho #}
+{% block cel_cabecalho %}{% endblock %}
+
 {% block app_content %}
 <div class="relatorio-page">
-    <h1>Relatório Final — Ocorrência #{{ ocorrencia.id }}</h1>
+    {% set rotulo_prioridade = {"critica": "Crítica", "alta": "Alta", "media": "Média"} %}
+    <section class="cel-so concluida">
+        <div class="concluida-topo">
+            <span class="concluida-selo">{{ icons.icon("check", 34) }}</span>
+            <h1>Atendimento finalizado</h1>
+            <p>O relatório foi gerado e a conversa com o hospital, encerrada.</p>
+        </div>
+        <dl class="concluida-cartao">
+            <div><dt>Ocorrência</dt><dd>{{ ocorrencia.id | codigo_emg }}</dd></div>
+            <div><dt>Finalizada em</dt><dd>{% if relatorio.finalizado_em %}<span data-utc="{{ relatorio.finalizado_em.isoformat() }}Z" data-formato="datahora"></span>{% else %}—{% endif %}</dd></div>
+            <div><dt>Duração</dt><dd>{{ (relatorio.tempo_atendimento_min | round | int) ~ " min" if relatorio.tempo_atendimento_min is not none else "—" }}</dd></div>
+            <div><dt>Hospital</dt><dd>{{ relatorio.hospital_nome or "—" }}</dd></div>
+            <div><dt>Local</dt><dd>{{ ocorrencia.local }}</dd></div>
+        </dl>
+        {% if ocorrencia.pacientes %}
+        <dl class="concluida-cartao">
+            {% for p in ocorrencia.pacientes %}
+            <div><dt>{{ p.nome }}</dt><dd><span class="priority-badge priority-{{ p.prioridade.value }}">{{ rotulo_prioridade[p.prioridade.value] }}</span></dd></div>
+            {% endfor %}
+        </dl>
+        {% endif %}
+        <div class="concluida-desfecho">
+            <span>Desfecho</span>
+            <p>{{ relatorio.desfecho or "—" }}</p>
+        </div>
+        <div class="concluida-acoes">
+            <a class="btn btn-primary btn-block" href="{{ url_for('auth.dashboard') }}">Voltar ao início</a>
+            <a class="btn btn-ghost btn-block" href="{{ url_for('ocorrencia.ver', ocorrencia_id=ocorrencia.id) }}">Ver ocorrência</a>
+        </div>
+    </section>
+
+    <header class="admin-page-header">
+        <div>
+            <span class="sobre">{{ ocorrencia.id | codigo_emg }} · atendimento concluído</span>
+            <h1>Relatório Final — Ocorrência #{{ ocorrencia.id }}</h1>
+        </div>
+    </header>
 
     <div class="relatorio-card">
         <div class="relatorio-secao">

@@ -13,53 +13,56 @@ window.OrbisMapaOcorrencia = (function () {
     const dados = window.MAPA_OCORRENCIA_DADOS;
     const CENTRO_PADRAO = [-15.7942, -47.8822];
 
-    const iconeSocorrista = window.OrbisIcones.badge(
+    // veículo ilustrado; parado (sem sirene/rotor) fora do trajeto em andamento
+    const iconeSocorrista = window.OrbisIcones.veiculo(
         dados.veiculo === "helicoptero" ? "helicoptero" : "ambulancia",
-        "#8c2b2b",
-        34
+        { tamanho: 56, parado: dados.trajeto_estado !== "em_andamento" }
     );
-    const iconeHospital = window.OrbisIcones.badge("hospital", "#1a1a1a", 30);
+    const iconeHospital = window.OrbisIcones.hospital(36);
 
     const centro = dados.posicao_socorrista || dados.destino || CENTRO_PADRAO;
-    const mapa = L.map("mapa-ocorrencia").setView(centro, 12);
+    const mapa = L.map("mapa-ocorrencia", { zoomControl: false }).setView(centro, 12);
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; colaboradores do OpenStreetMap",
-        maxZoom: 19,
-    }).addTo(mapa);
+    window.OrbisIcones.camadaBase().addTo(mapa);
+    L.control.zoom({ position: "bottomright" }).addTo(mapa);
 
     const pontos = [];
     let marcadorSocorrista = null;
 
     if (dados.posicao_socorrista) {
-        marcadorSocorrista = L.marker(dados.posicao_socorrista, { icon: iconeSocorrista })
+        marcadorSocorrista = L.marker(dados.posicao_socorrista, { icon: iconeSocorrista, title: "Socorrista" })
             .addTo(mapa)
             .bindPopup("Socorrista");
         pontos.push(dados.posicao_socorrista);
     }
 
     if (dados.destino) {
-        L.marker(dados.destino, { icon: iconeHospital }).addTo(mapa).bindPopup("Hospital de destino");
+        L.marker(dados.destino, { icon: iconeHospital, title: "Hospital de destino" }).addTo(mapa).bindPopup("Hospital de destino");
         pontos.push(dados.destino);
     }
 
     if (dados.rota_geometria) {
-        // Azul contrastante: o vermelho da marca se mistura com a cor das
-        // vias principais nos tiles do OpenStreetMap.
-        L.geoJSON(dados.rota_geometria, {
-            style: { color: "#1a56b0", weight: 5, opacity: 0.85 },
-        }).addTo(mapa);
+        // linha da rota com "borda" branca, como nos apps de navegação: fica
+        // legível sobre qualquer cor de via da cartografia
+        L.geoJSON(dados.rota_geometria, { style: { color: "#ffffff", weight: 9, opacity: 0.95, lineCap: "round" } }).addTo(mapa);
+        L.geoJSON(dados.rota_geometria, { style: { color: "#8c2b2b", weight: 5, opacity: 1, lineCap: "round" } }).addTo(mapa);
+        // partículas fluindo no sentido do destino (CSS .rota-fluxo)
+        L.geoJSON(dados.rota_geometria, { style: { color: "#ffffff", weight: 2, opacity: 0.95, dashArray: "1 13", lineCap: "round", className: "rota-fluxo" }, interactive: false }).addTo(mapa);
     }
 
     if (pontos.length > 1) {
-        mapa.fitBounds(pontos, { padding: [40, 40] });
+        mapa.fitBounds(pontos, (window.innerWidth > 1100 ? { paddingTopLeft: [500, 80], paddingBottomRight: [60, 60] } : { padding: [40, 40] }));
+    }
+    if (marcadorSocorrista && dados.destino) {
+        // aponta para o hospital desde o início (depois segue o rumo real)
+        setTimeout(() => window.OrbisIcones.apontar(marcadorSocorrista, dados.destino), 0);
     }
 
     function atualizarPosicaoSocorrista(lat, lng) {
         if (marcadorSocorrista) {
-            marcadorSocorrista.setLatLng([lat, lng]);
+            window.OrbisIcones.mover(marcadorSocorrista, [lat, lng]);
         } else {
-            marcadorSocorrista = L.marker([lat, lng], { icon: iconeSocorrista })
+            marcadorSocorrista = L.marker([lat, lng], { icon: iconeSocorrista, title: "Socorrista" })
                 .addTo(mapa)
                 .bindPopup("Socorrista");
         }

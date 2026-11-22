@@ -13,7 +13,7 @@ class Mensagem(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     ocorrencia_id = db.Column(
-        db.Integer, db.ForeignKey("ocorrencia.id"), nullable=False
+        db.Integer, db.ForeignKey("ocorrencia.id"), nullable=False, index=True
     )
     remetente_id = db.Column(db.Integer, db.ForeignKey("usuario.id"), nullable=False)
     conteudo = db.Column(db.Text, nullable=False)

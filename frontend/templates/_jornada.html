@@ -1,0 +1,29 @@
+{# A jornada de uma emergência — o fio que liga todas as telas do atendimento.
+   Aberta → Hospital → Trajeto → Chegada → Finalizada.
+   "feitas" = quantas etapas já foram cumpridas; a seguinte é a atual. #}
+{% macro etapas_feitas(ocorrencia, trajeto_estado=none) -%}
+    {%- set st = ocorrencia.status.value -%}
+    {%- if st == "finalizada" -%}5
+    {%- elif ocorrencia.chegada_confirmada_em -%}4
+    {%- elif st == "em_transporte" and trajeto_estado == "concluido" -%}3
+    {%- elif st == "em_transporte" -%}2
+    {%- else -%}1
+    {%- endif -%}
+{%- endmacro %}
+
+{% macro jornada(ocorrencia, trajeto_estado=none) %}
+{% set feitas = etapas_feitas(ocorrencia, trajeto_estado) | int %}
+<ol class="jornada" aria-label="Etapas do atendimento">
+    {% for rotulo in ["Aberta", "Hospital", "Trajeto", "Chegada", "Finalizada"] %}
+    {% set estado = "feita" if loop.index <= feitas else ("atual" if loop.index == feitas + 1 else "") %}
+    <li class="jornada-etapa {{ estado }}" {{ 'aria-current="step"' | safe if estado == "atual" }}>
+        <span class="jornada-ponto" aria-hidden="true">
+            {%- if estado == "feita" -%}
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            {%- endif -%}
+        </span>
+        <span class="jornada-rotulo">{{ rotulo }}</span>
+    </li>
+    {% endfor %}
+</ol>
+{% endmacro %}

@@ -1,25 +1,34 @@
 {% extends "app_base.html" %}
+{% import "_visor.html" as visor %}
+{% import "_icons.html" as icons %}
 
-{% block title %}Criar Ocorrência - OrbisHealth{% endblock %}
+{% block title %}Nova ocorrência - OrbisHealth{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/maplibre/maplibre-gl.css') }}">
 {% endblock %}
 
-{% block app_content %}
-<div class="mapa-page">
-    <div id="mapa-criar-ocorrencia" class="mapa-fullpane"></div>
+{% block cel_titulo %}Nova ocorrência{% endblock %}
 
-    <div class="ocorrencia-create-modal">
-        <div class="ocorrencia-create-modal-header">
-            <span class="modal-icon">+</span>
-            <h1>Criar Ocorrência</h1>
-        </div>
+{% block app_content %}
+<div class="mapa-page palco">
+    <div id="mapa-criar-ocorrencia" class="mapa-fullpane palco-mapa"></div>
+
+    <div class="ocorrencia-create-modal painel-flutuante painel-direito">
+        <header class="ocorrencia-create-modal-header">
+            <span class="sobre">Etapa 1 de 5 · Abertura</span>
+            <h1 class="titulo-display">Nova<br>ocorrência</h1>
+            <p class="admin-subtitle">Confirme o local e escolha o veículo. Depois você registra os pacientes e o hospital.</p>
+        </header>
 
         <form method="POST" id="form-criar-ocorrencia">
             <label for="local">Local</label>
-            <input type="text" id="local" name="local" value="{{ dados.get('local', '') }}"
-                   placeholder="Endereço ou ponto de referência" required>
+            <div class="campo-cel">
+                <span class="cel-so campo-cel-icone">{{ icons.icon("map-pin", 18) }}</span>
+                <input type="text" id="local" name="local" value="{{ dados.get('local', '') }}"
+                       placeholder="Endereço ou ponto de referência" required>
+            </div>
             <p class="campo-hint" id="local-hint">Capturando localização...</p>
 
             <label for="veiculo">Veículo</label>
@@ -28,6 +37,19 @@
                 <option value="ambulancia" {{ "selected" if dados.get("veiculo") == "ambulancia" }}>Ambulância</option>
                 <option value="helicoptero" {{ "selected" if dados.get("veiculo") == "helicoptero" }}>Helicóptero</option>
             </select>
+            {# Escolha visual: espelha o select acima (que continua sendo o campo enviado) #}
+            <div class="escolha-veiculo" role="group" aria-label="Escolha visual do veículo">
+                <button type="button" class="escolha-veiculo-op" data-veiculo="ambulancia">
+                    {{ visor.veiculo3d("ambulancia", movimento=false, classe="escolha-veiculo-arte", azimute=40, elevacao=14, folga=0.84, uid="op-a") }}
+                    <strong>Ambulância</strong>
+                    <small>Rota terrestre, pelas vias</small>
+                </button>
+                <button type="button" class="escolha-veiculo-op" data-veiculo="helicoptero">
+                    {{ visor.veiculo3d("helicoptero", movimento=false, classe="escolha-veiculo-arte", azimute=40, elevacao=12, folga=0.66, uid="op-h") }}
+                    <strong>Helicóptero</strong>
+                    <small>Linha reta · hospitais com heliponto</small>
+                </button>
+            </div>
 
             <label for="comentarios">Comentários (Opcional)</label>
             <textarea id="comentarios" name="comentarios" rows="3">{{ dados.get('comentarios', '') }}</textarea>
@@ -35,7 +57,7 @@
             <input type="hidden" id="latitude" name="latitude" value="">
             <input type="hidden" id="longitude" name="longitude" value="">
 
-            <button type="submit" class="btn btn-primary btn-block">Criar</button>
+            <button type="submit" class="btn btn-primary btn-block btn-lg btn-confirmar"><span class="btn-confirmar-check">{{ icons.icon("check", 18) }}</span> <span class="so-desk">Criar</span><span class="cel-so">Abrir ocorrência</span></button>
         </form>
     </div>
 </div>
@@ -44,10 +66,39 @@
 {% block extra_scripts %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="{{ url_for('static', filename='js/geolocalizacao.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/maplibre/maplibre-gl.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/maplibre/leaflet-maplibre-gl.js') }}"></script>
+<script src="{{ url_for('static', filename='js/icones_mapa.js') }}"></script>
 <script src="{{ url_for('static', filename='js/mapa_criar_ocorrencia.js') }}"></script>
+{{ visor.script() }}
 <script>
     iniciarMapaCriarOcorrencia({
         urlGeocodificarReverso: "{{ url_for('ocorrencia.geocodificar_reverso') }}"
     });
+</script>
+<script>
+    // Cartões de veículo <-> select #veiculo (o select é o campo enviado).
+    (function () {
+        const select = document.getElementById("veiculo");
+        const ops = document.querySelectorAll(".escolha-veiculo-op");
+        if (!select || !ops.length) return;
+        const sincronizar = () => ops.forEach((op) => {
+            const ativo = op.dataset.veiculo === select.value;
+            op.classList.toggle("ativo", ativo);
+            const v = op.querySelector("[data-3d]");
+            if (v) v.dataset.movimento = ativo ? "1" : "0";
+            op.setAttribute("aria-pressed", ativo ? "true" : "false");
+        });
+        ops.forEach((op) => op.addEventListener("click", () => {
+            select.value = op.dataset.veiculo;
+            select.dispatchEvent(new Event("change", { bubbles: true }));
+        }));
+        select.addEventListener("change", sincronizar);
+        // No celular a escolha é só pelos cartões (como no app): já começa em ambulância.
+        if (!select.value && window.matchMedia("(max-width: 760px)").matches && document.querySelector(".cel-app")) {
+            select.value = "ambulancia";
+        }
+        sincronizar();
+    })();
 </script>
 {% endblock %}
