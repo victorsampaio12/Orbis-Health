@@ -41,8 +41,26 @@ DNS, firewall, roteador ou a configuração do proxy.
    - `FLASK_DEBUG=0`.
    O `.env` nunca vai para o Git.
 4. Dentro de `backend/` com o venv ativo: `flask db upgrade`, `python seed.py`
-   (admin) e `python seed_demo.py` (44 hospitais públicos do DF e Entorno,
-   socorristas e ocorrências de demonstração).
+   e `python seed_demo.py` (44 hospitais públicos do DF e Entorno,
+   socorristas e ocorrências de demonstração). Depois, deixe o admin com
+   e-mail `admin@admin.com` e senha `123456` (o `seed.py` cria o admin com
+   outro e-mail/senha; este comando troca direto no banco):
+
+   ```bash
+   python -c "
+   from dotenv import load_dotenv; load_dotenv()
+   import bcrypt
+   from app import create_app, db
+   from app.models.usuario import Usuario
+   app = create_app()
+   with app.app_context():
+       u = Usuario.query.filter_by(email='admin@orbishealth.com').first()
+       u.email = 'admin@admin.com'
+       u.senha_hash = bcrypt.hashpw(b'123456', bcrypt.gensalt()).decode()
+       db.session.commit()
+       print('admin:', u.email)
+   "
+   ```
 5. Serviço do systemd para `backend/venv/bin/python run.py` (com
    `WorkingDirectory=.../backend`, `Restart=on-failure`, iniciando com a
    máquina e depois do PostgreSQL) — no mesmo estilo do serviço da OAB, se ele
@@ -51,9 +69,8 @@ DNS, firewall, roteador ou a configuração do proxy.
    (Socket.IO em `/socket.io/`): no nginx, repasse os cabeçalhos `Upgrade` e
    `Connection` e `X-Forwarded-Proto`; Caddy e Cloudflare Tunnel já fazem isso.
 7. Testar pelo endereço público `https://`:
-   - `/login` abre e o login funciona (admin: `admin@orbishealth.com` /
-     `Admin@123`) — depois **me peça uma senha nova e troque** (tela Perfil),
-     porque essa senha está publicada no README;
+   - `/login` abre e o login funciona com o admin `admin@admin.com` /
+     `123456`;
    - `/demo/` abre e "Começar como socorrista" leva ao formulário de nova
      ocorrência;
    - `/demo/qrcode` (logado como admin) mostra o QR code com o endereço

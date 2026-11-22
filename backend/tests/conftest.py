@@ -50,6 +50,8 @@ TEST_ENV = {
     "LOGIN_LOCKOUT_MINUTES": "15",
     "UPLOAD_FOLDER": UPLOADS_TESTE,  # fotos dos testes não vão pra backend/uploads
     "MODO_DEMONSTRACAO": "1",  # libera /demo (test_6_modo_demonstracao.py)
+    # sem proxy HTTPS na frente: não herdar o ATRAS_DE_PROXY do .env real
+    "ATRAS_DE_PROXY": "0",
 }
 
 VIEWPORT = {"width": 1600, "height": 1800}

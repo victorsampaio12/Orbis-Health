@@ -69,6 +69,9 @@ class Ambiente:
             "DB_PASSWORD": "nf",
             "UPLOAD_FOLDER": self.uploads,
             "FLASK_APP": "run.py",
+            # o .env real pode ter ATRAS_DE_PROXY=1 (cookie só via HTTPS);
+            # aqui não há proxy na frente
+            "ATRAS_DE_PROXY": "0",
             **(extra_env or {}),
         }
         self.processo = None
