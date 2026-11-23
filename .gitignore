@@ -8,3 +8,14 @@ backend/app/**/__pycache__/
 backups/
 .pytest_cache/
 backend/uploads/
+
+# fora do repositório: documentos, roteiros locais e resultados gerados
+PROMPT_HOSPEDAGEM.md
+*.docx
+OrbisHealth_Relatorio_Testes.pdf
+iniciar-celular.sh
+.vscode/
+mobile/.claude/
+mobile/AGENTS.md
+mobile/CLAUDE.md
+backend/testes_nao_funcionais/resultados/
